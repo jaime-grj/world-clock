@@ -59,7 +59,6 @@ declare module '$env/static/private' {
 	export const XDG_SESSION_TYPE: string;
 	export const npm_config_init_module: string;
 	export const SYSTEMD_EXEC_PID: string;
-	export const _: string;
 	export const XAUTHORITY: string;
 	export const VSCODE_GIT_ASKPASS_NODE: string;
 	export const MOTD_SHOWN: string;
@@ -88,6 +87,7 @@ declare module '$env/static/private' {
 	export const npm_package_name: string;
 	export const npm_config_prefix: string;
 	export const USER: string;
+	export const GIT_PAGER: string;
 	export const VSCODE_GIT_IPC_HANDLE: string;
 	export const QT_WAYLAND_RECONNECT: string;
 	export const KDE_SESSION_VERSION: string;
@@ -123,6 +123,7 @@ declare module '$env/static/private' {
 	export const npm_node_execpath: string;
 	export const LC_NUMERIC: string;
 	export const TERM_PROGRAM: string;
+	export const _: string;
 	export const NODE_ENV: string;
 }
 
@@ -186,7 +187,6 @@ declare module '$env/dynamic/private' {
 		XDG_SESSION_TYPE: string;
 		npm_config_init_module: string;
 		SYSTEMD_EXEC_PID: string;
-		_: string;
 		XAUTHORITY: string;
 		VSCODE_GIT_ASKPASS_NODE: string;
 		MOTD_SHOWN: string;
@@ -215,6 +215,7 @@ declare module '$env/dynamic/private' {
 		npm_package_name: string;
 		npm_config_prefix: string;
 		USER: string;
+		GIT_PAGER: string;
 		VSCODE_GIT_IPC_HANDLE: string;
 		QT_WAYLAND_RECONNECT: string;
 		KDE_SESSION_VERSION: string;
@@ -250,6 +251,7 @@ declare module '$env/dynamic/private' {
 		npm_node_execpath: string;
 		LC_NUMERIC: string;
 		TERM_PROGRAM: string;
+		_: string;
 		NODE_ENV: string;
 		[key: `PUBLIC_${string}`]: undefined;
 		[key: `${string}`]: string | undefined;

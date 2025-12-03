@@ -15,6 +15,10 @@
 		"@sveltejs/adapter-auto": "^7.0.0",
 		"@sveltejs/kit": "^2.48.5",
 		"@sveltejs/vite-plugin-svelte": "^6.2.1",
+		"@types/d3": "^7.4.3",
+		"@types/geojson": "^7946.0.16",
+		"@types/topojson-client": "^3.1.5",
+		"@types/tz-lookup": "^6.1.2",
 		"svelte": "^5.43.8",
 		"svelte-check": "^4.3.4",
 		"typescript": "^5.9.3",
@@ -25,6 +29,7 @@
 		"d3-geo": "^3.1.1",
 		"d3-zoom": "^3.0.0",
 		"topojson-client": "^3.1.0",
+		"tz-lookup": "^6.1.25",
 		"world-atlas": "^2.0.2"
 	}
 }

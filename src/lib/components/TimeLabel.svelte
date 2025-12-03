@@ -3,6 +3,7 @@
 	import { getTimeForTZ } from '$lib/utils/timezones';
 
 	export let label: string;
+	export let flag = '🏳️';
 	export let timezone: string;
 	export let x = 0;
 	export let y = 0;
@@ -33,7 +34,10 @@
 	on:click|stopPropagation={handleFavorite}
 	aria-label={`Añadir ${label} (${timezone}) a favoritos`}
 >
-	<span class="label">{label}</span>
+	<span class="heading">
+		<span class="flag" aria-hidden="true">{flag}</span>
+		<span class="country">{label}</span>
+	</span>
 	<span class="time" bind:this={timeElement}>{initialTime}</span>
 	<span class="timezone">{timezone}</span>
 </button>
@@ -42,19 +46,19 @@
 	.time-label {
 		position: absolute;
 		border: 1px solid #0f172a33;
-		border-radius: 6px;
-		padding: 0.35rem 0.6rem;
-		background: rgba(15, 23, 42, 0.75);
+		border-radius: 4px;
+		padding: 0.3rem 0.45rem;
+		background: rgba(15, 23, 42, 0.72);
 		color: #f8fafc;
-		font-size: 0.75rem;
+		font-size: 0.7rem;
 		line-height: 1.2;
 		display: flex;
 		flex-direction: column;
-		gap: 0.15rem;
-		min-width: 120px;
+		gap: 0.12rem;
+		min-width: 110px;
 		cursor: pointer;
 		transition: transform 120ms ease, box-shadow 120ms ease;
-		box-shadow: 0 2px 6px rgba(15, 23, 42, 0.35);
+		box-shadow: 0 1px 4px rgba(15, 23, 42, 0.35);
 		text-align: left;
 	}
 
@@ -65,17 +69,30 @@
 		outline: none;
 	}
 
-	.label {
+	.heading {
+		display: flex;
+		align-items: center;
+		gap: 0.35rem;
 		font-weight: 600;
+	}
+
+	.flag {
+		font-size: 1rem;
+		line-height: 1;
+	}
+
+	.country {
+		font-size: 0.82rem;
 	}
 
 	.time {
 		font-variant-numeric: tabular-nums;
-		font-size: 0.9rem;
+		font-size: 0.95rem;
+		font-family: 'JetBrains Mono', 'SFMono-Regular', ui-monospace, 'Cascadia Code', monospace;
 	}
 
 	.timezone {
-		font-size: 0.7rem;
+		font-size: 0.62rem;
 		opacity: 0.85;
 		font-family: 'JetBrains Mono', 'SFMono-Regular', ui-monospace, 'Cascadia Code', monospace;
 	}

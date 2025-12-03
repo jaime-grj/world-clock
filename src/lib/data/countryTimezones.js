@@ -599,3 +599,16 @@ export function getCountryTimezones(countryName) {
     coords: entry.coords
   }));
 }
+
+/**
+ * @param {string} timezone
+ */
+export function findTimezoneData(timezone) {
+  for (const [country, zones] of Object.entries(countryTimezones)) {
+    const match = zones.find((entry) => entry.timezone === timezone);
+    if (match) {
+      return { country, label: match.label };
+    }
+  }
+  return null;
+}

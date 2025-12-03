@@ -1,6 +1,8 @@
 <script lang="ts">
   import { createEventDispatcher, onDestroy } from 'svelte';
   import { getTimeForTZ } from '$lib/utils/timezones';
+  import { findTimezoneData } from '$lib/data/countryTimezones.js';
+  import { getFlagEmoji } from '$lib/utils/countryFlags';
 
   export let favorites: string[] = [];
 
@@ -16,6 +18,11 @@
   function remove(tz: string) {
     dispatch('removeFavorite', tz);
   }
+
+  $: favoriteDetails = favorites.map((tz) => ({
+    tz,
+    meta: findTimezoneData(tz)
+  }));
 </script>
 
 <section class="favorites">
@@ -24,23 +31,33 @@
     <p>{favorites.length} {favorites.length === 1 ? 'zona' : 'zonas'}</p>
   </div>
 
-  {#if favorites.length === 0}
-    <p class="empty">Haz clic en una etiqueta del mapa para guardarla aquí.</p>
-  {:else}
-    <ul>
-      {#each favorites as tz}
-        <li>
-          <div>
-            <strong>{tz}</strong>
-            <span>{getTimeForTZ(now, tz)}</span>
-          </div>
-          <button on:click={() => remove(tz)} aria-label={`Quitar ${tz} de favoritos`}>
-            ✕
-          </button>
-        </li>
-      {/each}
-    </ul>
-  {/if}
+  <div class="favorites-body">
+    {#if favorites.length === 0}
+      <p class="empty">Haz clic en una etiqueta del mapa para guardarla aquí.</p>
+    {:else}
+      <ul>
+        {#each favoriteDetails as favorite}
+          <li>
+            <div>
+              {#if favorite.meta}
+                <span class="fav-heading">
+                  <span class="fav-flag">{getFlagEmoji(favorite.meta.country)}</span>
+                  <strong>{favorite.meta.country}</strong>
+                </span>
+                <span class="fav-tz">{favorite.meta.label} · {favorite.tz}</span>
+              {:else}
+                <strong>{favorite.tz}</strong>
+              {/if}
+              <span>{getTimeForTZ(now, favorite.tz)}</span>
+            </div>
+            <button on:click={() => remove(favorite.tz)} aria-label={`Quitar ${favorite.tz} de favoritos`}>
+              ✕
+            </button>
+          </li>
+        {/each}
+      </ul>
+    {/if}
+  </div>
 </section>
 
 <style>
@@ -52,6 +69,9 @@
     box-shadow: 0 12px 30px rgba(15, 23, 42, 0.15);
     min-width: 240px;
     color: var(--text-color);
+    height: 100%;
+    display: flex;
+    flex-direction: column;
   }
 
   .header {
@@ -94,6 +114,23 @@
     gap: 0.15rem;
   }
 
+  .fav-heading {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    font-size: 0.95rem;
+  }
+
+  .fav-flag {
+    font-size: 1.1rem;
+  }
+
+  .fav-tz {
+    font-family: 'JetBrains Mono', 'SFMono-Regular', ui-monospace, 'Cascadia Code', monospace;
+    font-size: 0.72rem;
+    color: var(--muted-color);
+  }
+
   strong {
     font-size: 0.95rem;
   }
@@ -122,5 +159,20 @@
     margin: 0.5rem 0 0;
     color: var(--muted-color);
     font-size: 0.9rem;
+  }
+
+  .favorites-body {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  .favorites-body ul {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    padding-right: 0.25rem;
   }
 </style>

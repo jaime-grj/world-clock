@@ -60,20 +60,13 @@
   }
 </script>
 
-<section class="hero">
-  <div class="hero-top">
+<div class="fullscreen-map">
+  <WorldMap {theme} {favorites} on:addFavorite={(event) => addFavorite(event.detail)} />
+  <div class="ui-overlay">
     <button class="theme-toggle" type="button" on:click={toggleTheme} aria-label="Cambiar tema">
       {theme === 'light' ? '🌙' : '☀️'}
     </button>
-  </div>
-</section>
-
-<div class="layout">
-  <div class="map-panel">
-    <WorldMap {theme} on:addFavorite={(event) => addFavorite(event.detail)} />
-    <div class="favorites-drawer">
-      <FavoriteList {favorites} on:removeFavorite={(event) => removeFavorite(event.detail)} />
-    </div>
+    <FavoriteList {favorites} on:removeFavorite={(event) => removeFavorite(event.detail)} />
   </div>
 </div>
 
@@ -84,6 +77,7 @@
     background: var(--page-bg);
     color: var(--text-color);
     transition: background 200ms ease, color 200ms ease;
+    min-height: 100vh;
   }
 
   :global(body[data-theme='light']) {
@@ -136,32 +130,33 @@
     --panel-border: rgba(148, 163, 184, 0.15);
   }
 
-  .hero {
-    margin: 0 auto 2.5rem;
-    max-width: 1200px;
-    padding: 0 1.5rem;
+  .fullscreen-map {
+    position: relative;
+    width: 100vw;
+    height: 100vh;
+    overflow: hidden;
   }
 
-  .hero-top {
+  .fullscreen-map :global(.map-shell),
+  .fullscreen-map :global(.map-wrapper) {
+    width: 100%;
+    height: 100%;
+  }
+
+  .ui-overlay {
+    position: absolute;
+    top: 1.5rem;
+    right: 1.5rem;
     display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
+    flex-direction: column;
+    align-items: flex-end;
     gap: 1rem;
+    width: min(220px, 22vw);
+    z-index: 20;
   }
 
-  header {
-    max-width: 780px;
-  }
-
-  .hero-title {
-    margin: 0 0 0.5rem;
-    font-size: clamp(2rem, 4vw, 3.2rem);
-  }
-
-  .hero p {
-    margin: 0;
-    color: var(--muted-color);
-    font-size: 1.05rem;
+  .ui-overlay :global(.favorites) {
+    max-height: min(55vh, 480px);
   }
 
   .theme-toggle {
@@ -184,44 +179,23 @@
     box-shadow: 0 12px 35px rgba(15, 23, 42, 0.35);
   }
 
-  .layout {
-    margin: 0 auto 3rem;
-    max-width: 1400px;
-    padding: 0 1.5rem;
-  }
-
-  .map-panel {
-    position: relative;
-    border: 1px solid var(--panel-border);
-    background: var(--panel-bg);
-    padding: 1.5rem;
-    min-height: clamp(460px, 72vh, 820px);
-  }
-
-  @media (min-width: 1025px) {
-    .map-panel {
-      padding: 1.5rem;
-      padding-right: clamp(320px, 28%, 380px);
-    }
-  }
-
-  .map-panel :global(.map-shell) {
-    width: 100%;
-  }
-
-  .favorites-drawer {
-    position: absolute;
-    top: 1.5rem;
-    right: 1.5rem;
-    width: min(320px, 28%);
-    z-index: 5;
-  }
-
-  @media (max-width: 1024px) {
-    .favorites-drawer {
+  @media (max-width: 768px) {
+    .ui-overlay {
       position: static;
       width: 100%;
-      margin-top: 1.5rem;
+      align-items: stretch;
+      padding: 1rem;
+      background: linear-gradient(180deg, rgba(2, 6, 23, 0.9), rgba(2, 6, 23, 0));
+    }
+
+    .fullscreen-map {
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+    }
+
+    .fullscreen-map :global(.map-shell) {
+      flex: 1;
     }
   }
 </style>

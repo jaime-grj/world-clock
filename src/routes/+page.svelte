@@ -6,6 +6,7 @@
   type Theme = 'light' | 'dark';
 
   let favorites: string[] = [];
+  let showFavorites = true;
   let theme: Theme = 'light';
   const FAVORITES_KEY = 'world-clock:favorites';
   let favoritesLoaded = false;
@@ -66,7 +67,12 @@
     <button class="theme-toggle" type="button" on:click={toggleTheme} aria-label="Cambiar tema">
       {theme === 'light' ? '🌙' : '☀️'}
     </button>
-    <FavoriteList {favorites} on:removeFavorite={(event) => removeFavorite(event.detail)} />
+    <button class="favorites-toggle" type="button" on:click={() => showFavorites = !showFavorites} aria-label={showFavorites ? 'Ocultar favoritos' : 'Mostrar favoritos'}>
+      {showFavorites ? '✖️' : '⭐'}
+    </button>
+    {#if showFavorites}
+      <FavoriteList {favorites} on:removeFavorite={(event) => removeFavorite(event.detail)} />
+    {/if}
   </div>
 </div>
 
@@ -170,6 +176,32 @@
     box-shadow: 0 8px 30px rgba(15, 23, 42, 0.25);
     cursor: pointer;
     transition: transform 150ms ease, box-shadow 150ms ease;
+  }
+
+  .favorites-toggle {
+    border: none;
+    border-radius: 0;
+    width: 48px;
+    height: 48px;
+    font-size: 1.15rem;
+    background: var(--card-bg);
+    color: var(--text-color);
+    box-shadow: 0 8px 30px rgba(15, 23, 42, 0.25);
+    cursor: pointer;
+    transition: transform 150ms ease, box-shadow 150ms ease;
+    margin-bottom: 0.5rem;
+    padding: 0 0.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    white-space: nowrap;
+  }
+
+  .favorites-toggle:hover,
+  .favorites-toggle:focus-visible {
+    transform: translateY(-2px);
+    outline: none;
+    box-shadow: 0 12px 35px rgba(15, 23, 42, 0.35);
   }
 
   .theme-toggle:hover,

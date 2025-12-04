@@ -36,10 +36,10 @@
 >
 	<span class="heading">
 		<span class="flag" aria-hidden="true">{flag}</span>
-		<span class="country">{label}</span>
+		<span class="timezone">{timezone}</span>
 	</span>
 	<span class="time" bind:this={timeElement}>{initialTime}</span>
-	<span class="timezone">{timezone}</span>
+
 </button>
 
 <style>
@@ -87,8 +87,10 @@
 
 	.time {
 		font-variant-numeric: tabular-nums;
-		font-size: 0.95rem;
+		font-size: 0.9rem;
 		font-family: 'JetBrains Mono', 'SFMono-Regular', ui-monospace, 'Cascadia Code', monospace;
+		display: block;
+		text-align: center;
 	}
 
 	.timezone {

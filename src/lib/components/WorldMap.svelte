@@ -5,7 +5,7 @@
   import type { Feature, FeatureCollection, GeoJsonProperties, Geometry } from 'geojson';
   import type { Topology } from 'topojson-specification';
   import world from '$lib/data/world-100m.json';
-  import { getCountryTimezones } from '$lib/data/countryTimezones.js';
+  import { getCountryTimezones, normalizeCountryName } from '$lib/data/countryTimezones.js';
   import tzLookup from 'tz-lookup';
   import TimeLabel from '$lib/components/TimeLabel.svelte';
   import { getFlagEmoji } from '$lib/utils/countryFlags';
@@ -30,6 +30,7 @@
   const ASPECT_RATIO = 0.56;
   const MIN_HEIGHT = 380;
   const MAX_VIEWPORT_RATIO = 0.8;
+  const TILE_OFFSETS = [0, -1, 1] as const;
 
   export let theme: Theme = 'light';
   export let favorites: string[] = [];
@@ -54,6 +55,7 @@
   let activePath: SVGPathElement | null = null;
   let hoverTimeout: ReturnType<typeof setTimeout> | null = null;
   let pointerOverLabel = false;
+  let tileWidth = 0;
 
   $: hoveredLabels = hoveredCountry
     ? labelAnchors
@@ -123,6 +125,9 @@
 
     const path = d3.geoPath().projection(projection);
 
+    const bounds = path.bounds(featureCollection);
+    tileWidth = bounds[1][0] - bounds[0][0];
+
     if (!svgContainer) {
       return;
     }
@@ -137,49 +142,60 @@
 
     mapGroup = svg.append('g').attr('class', 'map-content');
 
+    const waterWidth = tileWidth * TILE_OFFSETS.length || width;
     mapGroup
       .append('rect')
-      .attr('width', width)
+      .attr('x', -tileWidth || 0)
+      .attr('width', waterWidth)
       .attr('height', height)
       .attr('fill', WATER_COLOR);
 
-    mapGroup
-      .append('g')
-      .selectAll('path')
-      .data(countries)
-      .enter()
-      .append('path')
-      .attr('d', path)
-      .attr('fill', LAND_COLOR)
-      .attr('stroke', STROKE_COLOR)
-      .attr('stroke-width', 0.5)
-      .on('mouseover', (event: MouseEvent, d: CountryFeature) => {
-        cancelHoverClear();
-        if (activePath && activePath !== event.currentTarget) {
-          d3.select(activePath).attr('fill', LAND_COLOR);
-        }
-        hoveredCountry = d.properties.name;
-        activePath = event.currentTarget as SVGPathElement;
-        d3.select(activePath).attr('fill', HIGHLIGHT_COLOR);
-      })
-      .on('mouseout', (event: MouseEvent) => {
-        const next = event.relatedTarget as Element | null;
-        if (next && next.closest('.time-label')) {
-          cancelHoverClear();
-          return;
-        }
-        scheduleHoverClear();
-      })
-      .on('click', (_event: MouseEvent, d: CountryFeature) => {
-        const [first] = getCountryTimezones(d.properties.name);
-        if (first) {
-          dispatch('addFavorite', first.timezone);
-        }
-      });
+    const tilesGroup = mapGroup.append('g').attr('class', 'map-tiles');
 
-    labelAnchors = countries.flatMap((country: CountryFeature) => {
-      const definedZones = getCountryTimezones(country.properties.name);
-      const fallbackZones = definedZones.length ? definedZones : buildFallbackZone(country);
+    TILE_OFFSETS.forEach((offset) => {
+      const tileGroup = tilesGroup.append('g').attr('transform', `translate(${offset * tileWidth},0)`);
+
+      tileGroup
+        .append('g')
+        .selectAll('path')
+        .data(countries)
+        .enter()
+        .append('path')
+        .attr('d', path)
+        .attr('fill', LAND_COLOR)
+        .attr('stroke', STROKE_COLOR)
+        .attr('stroke-width', 0.5)
+        .on('mouseover', (event: MouseEvent, d: CountryFeature) => {
+          cancelHoverClear();
+          if (activePath && activePath !== event.currentTarget) {
+            d3.select(activePath).attr('fill', LAND_COLOR);
+          }
+          hoveredCountry = normalizeCountryName(d.properties.name);
+          activePath = event.currentTarget as SVGPathElement;
+          d3.select(activePath).attr('fill', HIGHLIGHT_COLOR);
+        })
+        .on('mouseout', (event: MouseEvent) => {
+          const next = event.relatedTarget as Element | null;
+          if (next && next.closest('.time-label')) {
+            cancelHoverClear();
+            return;
+          }
+          scheduleHoverClear();
+        })
+        .on('click', (_event: MouseEvent, d: CountryFeature) => {
+          const countryName = normalizeCountryName(d.properties.name);
+          const [first] = getCountryTimezones(countryName);
+          if (first) {
+            dispatch('addFavorite', first.timezone);
+          }
+        });
+    });
+
+    const baseAnchors = countries.flatMap((country: CountryFeature) => {
+      const mapName = country.properties.name;
+      const countryName = normalizeCountryName(mapName);
+      const definedZones = getCountryTimezones(countryName);
+      const fallbackZones = definedZones.length ? definedZones : buildFallbackZone(country, countryName);
       if (!fallbackZones.length) {
         return [];
       }
@@ -188,41 +204,49 @@
 
       return fallbackZones
         .map((zone) => {
-        let projected: [number, number] | null = centroid;
+          let projected: [number, number] | null = centroid;
 
-        if (zone.coords) {
-          const candidate = projection(zone.coords);
-          if (candidate) {
-            projected = candidate;
+          if (zone.coords) {
+            const candidate = projection(zone.coords);
+            if (candidate) {
+              projected = candidate;
+            }
           }
-        }
 
-        if (!projected) {
-          return null;
-        }
+          if (!projected) {
+            return null;
+          }
 
           return {
-            id: `${country.properties.name}-${zone.id}`,
+            id: `${countryName}-${zone.id}`,
             label: zone.label,
             timezone: zone.timezone,
             x: projected[0],
             y: projected[1],
-            country: country.properties.name,
-            flag: getFlagEmoji(country.properties.name)
+            country: countryName,
+            flag: getFlagEmoji(countryName)
           } satisfies LabelPoint;
         })
         .filter(Boolean) as LabelPoint[];
     });
 
+    labelAnchors = TILE_OFFSETS.flatMap((offset) =>
+      baseAnchors.map((anchor) => ({
+        ...anchor,
+        id: offset === 0 ? anchor.id : `${anchor.id}-rep-${offset}`,
+        x: anchor.x + offset * tileWidth
+      }))
+    );
+
+    const horizontalExtent = tileWidth || width;
+    const extentPadding = horizontalExtent * 2;
+
     zoomBehavior = d3
       .zoom<SVGSVGElement, unknown>()
       .scaleExtent([1, 8])
-      .translateExtent([[0, 0], [width, height]])
+      .translateExtent([[-extentPadding, -height], [width + extentPadding, height * 2]])
       .on('zoom', (event) => {
-        if (mapGroup) {
-          mapGroup.attr('transform', event.transform.toString());
-        }
-        currentTransform = event.transform;
+        applyZoomTransform(event.transform);
       });
 
     svg.call(zoomBehavior).on('dblclick.zoom', null);
@@ -307,6 +331,15 @@
     }
   }
 
+  function applyZoomTransform(transform: d3.ZoomTransform) {
+    if (!mapGroup) {
+      return;
+    }
+
+    currentTransform = transform;
+    mapGroup.attr('transform', transform.toString());
+  }
+
   function mergeLabels(primary: RenderLabel[], secondary: RenderLabel[]) {
     const seen = new Set<string>();
     const result: RenderLabel[] = [];
@@ -323,7 +356,7 @@
     return result;
   }
 
-  function buildFallbackZone(country: CountryFeature) {
+  function buildFallbackZone(country: CountryFeature, normalizedName: string) {
     const centroid = d3.geoCentroid(country);
     if (!centroid || centroid.some((value) => Number.isNaN(value))) {
       return [];
@@ -335,10 +368,10 @@
       return [
         {
           id: 'auto',
-          label: country.properties.name,
+          label: normalizedName,
           timezone,
           coords: [lon, lat] as [number, number],
-          flag: getFlagEmoji(country.properties.name)
+          flag: getFlagEmoji(normalizedName)
         }
       ];
     } catch {

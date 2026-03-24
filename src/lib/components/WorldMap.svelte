@@ -79,6 +79,13 @@
   let showAllTimezones = false;
   let sliderValue = 0;
 
+  let initialScale = 1;
+  let initialTranslate: [number, number] = [0, 0];
+  let lastRenderedTransform: d3.ZoomTransform = d3.zoomIdentity;
+  let baseTileWidth = 0;
+  let d3Path: any = null;
+  let d3Projection: any = null;
+
   function scaleToSlider(k: number) {
     return (Math.log(k / MIN_ZOOM) / Math.log(MAX_ZOOM / MIN_ZOOM)) * 100;
   }
@@ -315,10 +322,16 @@
       .scale((width / (2 * Math.PI)) * 0.9)
       .translate([width / 2, height / 1.5]);
 
+    d3Projection = projection;
     const path = d3.geoPath().projection(projection);
+    d3Path = path;
+
+    initialScale = projection.scale();
+    initialTranslate = projection.translate() as [number, number];
 
     const bounds = path.bounds(featureCollection);
-    tileWidth = bounds[1][0] - bounds[0][0];
+    baseTileWidth = bounds[1][0] - bounds[0][0];
+    tileWidth = baseTileWidth;
 
     if (!svgContainer) {
       return;
@@ -337,7 +350,7 @@
     const tilesGroup = mapGroup.append('g').attr('class', 'map-tiles');
 
     TILE_OFFSETS.forEach((offset) => {
-      const tileGroup = tilesGroup.append('g').attr('transform', `translate(${offset * tileWidth},0)`);
+      const tileGroup = tilesGroup.append('g').attr('data-offset', offset).attr('transform', `translate(${offset * baseTileWidth},0)`);
 
       tileGroup
         .append('g')
@@ -452,6 +465,9 @@
       .translateExtent([[-extentPadding, -height], [width + extentPadding, height * 2]])
       .on('zoom', (event) => {
         applyZoomTransform(event.transform);
+      })
+      .on('end', (event) => {
+        updateSemanticZoom(event.transform);
       });
 
     svg.call(zoomBehavior).on('dblclick.zoom', null);
@@ -464,6 +480,7 @@
       clearHover();
     });
 
+    updateSemanticZoom(currentTransform);
     applyZoomTransform(currentTransform);
   }
 
@@ -551,13 +568,42 @@
   }
 
   function applyZoomTransform(transform: d3.ZoomTransform) {
-    if (!mapGroup) {
+    const g = mapGroup;
+    if (!g) {
       return;
     }
 
     currentTransform = transform;
     sliderValue = scaleToSlider(transform.k);
-    mapGroup.attr('transform', transform.toString());
+
+    const scale = transform.k / lastRenderedTransform.k;
+    const deltaX = transform.x - scale * lastRenderedTransform.x;
+    const deltaY = transform.y - scale * lastRenderedTransform.y;
+
+    g.attr('transform', `translate(${deltaX}, ${deltaY}) scale(${scale})`);
+  }
+
+  function updateSemanticZoom(transform: d3.ZoomTransform) {
+    const g = mapGroup;
+    if (!g || !d3Projection || !d3Path) return;
+
+    lastRenderedTransform = transform;
+
+    g.attr('transform', null);
+    d3Projection
+      .scale(initialScale * transform.k)
+      .translate([
+        initialTranslate[0] * transform.k + transform.x,
+        initialTranslate[1] * transform.k + transform.y
+      ]);
+
+    g.selectAll('path').attr('d', d3Path as any);
+
+    TILE_OFFSETS.forEach((offset) => {
+      g
+        .select(`g[data-offset="${offset}"]`)
+        .attr('transform', `translate(${offset * baseTileWidth * transform.k},0)`);
+    });
   }
 
   function mergeLabels(primary: RenderLabel[], secondary: RenderLabel[]) {

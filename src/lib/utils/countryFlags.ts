@@ -258,6 +258,8 @@ const flagByCountry: Record<string, string> = {
   'South Pole': '🇦🇶',
   'Macquarie Island': '🇦🇺',
   Kosovo: '🇽🇰',
+  'Åland': '🇦🇽',
+  'Fr. S. Antarctic Lands': '🇹🇫'
 };
 
 export function getFlagEmoji(countryName: string) {

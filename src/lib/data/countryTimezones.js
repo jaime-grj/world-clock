@@ -2068,6 +2068,14 @@ export const countryTimezones = {
       coords: [73.5042, -53.0818]
     }
   ],
+  'Fr. S. Antarctic Lands': [
+    {
+      id: 'tf-main',
+      label: 'Territorios Australes Franceses',
+      timezone: 'Indian/Kerguelen',
+      coords: [69.5042, -49.2818]
+    }
+  ],
   'South Georgia and the South Sandwich Islands': [
     {
       id: 'gs-main',
@@ -2386,6 +2394,14 @@ export const countryTimezones = {
       coords: [20.9, 42.6667]
     }
   ],
+  Åland: [
+    {
+      id: 'ax-main',
+      label: 'Islas Åland',
+      timezone: 'Europe/Mariehamn',
+      coords: [19.9333, 60.1167]
+    }
+  ]
 };
 
 /** @type {Record<string, string>} */

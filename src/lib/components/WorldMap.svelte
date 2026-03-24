@@ -47,6 +47,8 @@
   const MIN_HEIGHT = 380;
   const MAX_VIEWPORT_RATIO = 0.8;
   const TILE_OFFSETS = [0, -1, 1] as const;
+  const MIN_ZOOM = 0.5;
+  const MAX_ZOOM = 64;
 
   export let theme: Theme = 'light';
   export let favorites: FavoriteZone[] = [];
@@ -71,8 +73,19 @@
   let pointerOverLabel = false;
   let tileWidth = 0;
   let showFavorites = false;
+  let showConfig = false;
   let initialLoadDone = false;
   let internalFavorites: FavoriteZone[] = [];
+  let showAllTimezones = false;
+  let sliderValue = 0;
+
+  function scaleToSlider(k: number) {
+    return (Math.log(k / MIN_ZOOM) / Math.log(MAX_ZOOM / MIN_ZOOM)) * 100;
+  }
+
+  function sliderToScale(val: number) {
+    return MIN_ZOOM * Math.pow(MAX_ZOOM / MIN_ZOOM, val / 100);
+  }
 
   $: {
     if (initialLoadDone && typeof window !== 'undefined') {
@@ -96,52 +109,124 @@
       return { ...label, x: tx, y: ty, targetX: tx, targetY: ty, source: 'favorite' } satisfies RenderLabel;
     });
 
-  $: rawLabels = mergeLabels(favoriteLabels, hoveredLabels);
-  $: arrangedLabels = arrangeLabels(rawLabels);
+  $: allLabels = showAllTimezones
+    ? labelAnchors.map((label) => {
+        const [tx, ty] = currentTransform.apply([label.x, label.y]);
+        return { ...label, x: tx, y: ty, targetX: tx, targetY: ty, source: 'hover' } satisfies RenderLabel;
+      })
+    : [];
+
+  $: rawLabels = showAllTimezones ? allLabels : mergeLabels(favoriteLabels, hoveredLabels);
+
+  let arrangedLabels: RenderLabel[] = [];
+  let lastLabelIds = '';
+  let arrangeTimeout: ReturnType<typeof setTimeout> | null = null;
+
+  $: updateArrangedLabels(rawLabels);
+
+  function updateArrangedLabels(newRaw: RenderLabel[]) {
+    if (!newRaw || newRaw.length === 0) {
+      arrangedLabels = [];
+      lastLabelIds = '';
+      if (arrangeTimeout) clearTimeout(arrangeTimeout);
+      return;
+    }
+
+    const currentIds = newRaw.map((l) => l.id).join(',');
+
+    // If the amount or origin of items changed (e.g. toggled "show all", or hovered a new country)
+    // we re-run immediately, avoiding visual snap-backs by passing the existing simulated points.
+    if (currentIds !== lastLabelIds) {
+      if (arrangeTimeout) clearTimeout(arrangeTimeout);
+      const currentMap = new Map(arrangedLabels.map((a) => [a.id, a]));
+      arrangedLabels = arrangeLabels(
+        newRaw.map((r) => {
+          const current = currentMap.get(r.id);
+          return { ...r, x: current ? current.x : r.x, y: current ? current.y : r.y };
+        })
+      );
+      lastLabelIds = currentIds;
+      return;
+    }
+
+    // During panning and zooming, we fast-track visual updates by mapping math deltas
+    // instead of executing the extremely heavy D3 quadtree collision function.
+    const rawMap = new Map(newRaw.map((r) => [r.id, r]));
+    arrangedLabels = arrangedLabels.map((label) => {
+      const raw = rawMap.get(label.id);
+      if (!raw) return label;
+      const dx = raw.targetX - label.targetX;
+      const dy = raw.targetY - label.targetY;
+      return { ...raw, x: label.x + dx, y: label.y + dy };
+    });
+
+    if (arrangeTimeout) {
+      clearTimeout(arrangeTimeout);
+    }
+
+    // Let the heavy simulation settle in after interactions finish (Debouncer)
+    arrangeTimeout = setTimeout(() => {
+      const currentMap = new Map(arrangedLabels.map((a) => [a.id, a]));
+      arrangedLabels = arrangeLabels(
+        newRaw.map((r) => {
+          const current = currentMap.get(r.id);
+          return { ...r, x: current ? current.x : r.x, y: current ? current.y : r.y };
+        })
+      );
+    }, 150);
+  }
 
   function rectCollide() {
     let simNodes: any[];
     
     function force(alpha: number) {
-      for (let iter = 0; iter < 6; ++iter) {
+      const quadtree = d3.quadtree(simNodes, (d: any) => d.x, (d: any) => d.y);
+      // Dynamically lower precision iterations for large lists to prevent lagging 
+      const iterations = simNodes.length > 300 ? 1 : (simNodes.length > 50 ? 2 : 4);
+      
+      for (let iter = 0; iter < iterations; ++iter) {
         for (let i = 0, n = simNodes.length; i < n; ++i) {
           const a = simNodes[i];
-          // Approx width: 7.5px per character plus 60px for flag, padding and margin
           const wa = (a.label.length * 10) + 60; 
-          const ha = 48; // Extra vertical margin
+          const ha = 48;
+          const searchRadius = wa / 2 + 150;
           
-          for (let j = i + 1; j < n; ++j) {
-            const b = simNodes[j];
-            const wb = (b.label.length * 7.5) + 60;
-            const hb = 48;
+          quadtree.visit((node: any, x1: number, y1: number, x2: number, y2: number) => {
+            if (!node.length) {
+              do {
+                const b = node.data;
+                if (b.index > a.index) {
+                  const wb = (b.label.length * 8) + 60;
+                  const hb = 48;
 
-            let dx = a.x - b.x;
-            let dy = a.y - b.y;
-            // Add slight randomness if completely overlapped to avoid deadlocks
-            if (dx === 0 && dy === 0) {
-              dx = (Math.random() - 0.5) * 2;
-              dy = (Math.random() - 0.5) * 2;
+                  let dx = a.x - b.x;
+                  let dy = a.y - b.y;
+                  if (dx === 0 && dy === 0) {
+                    dx = (Math.random() - 0.5) * 2;
+                    dy = (Math.random() - 0.5) * 2;
+                  }
+
+                  const w = (wa + wb) / 2;
+                  const h = (ha + hb) / 2;
+
+                  if (Math.abs(dx) < w && Math.abs(dy) < h) {
+                    const lx = (w - Math.abs(dx)) * (dx > 0 ? 1 : -1);
+                    const ly = (h - Math.abs(dy)) * (dy > 0 ? 1 : -1);
+                    const pushStrength = simNodes.length > 300 ? alpha * 1.5 : alpha * 0.8;
+
+                    if (Math.abs(lx) < Math.abs(ly)) {
+                      a.x += lx * pushStrength;
+                      b.x -= lx * pushStrength;
+                    } else {
+                      a.y += ly * pushStrength;
+                      b.y -= ly * pushStrength;
+                    }
+                  }
+                }
+              } while ((node = node.next));
             }
-
-            const w = (wa + wb) / 2;
-            const h = (ha + hb) / 2;
-
-            if (Math.abs(dx) < w && Math.abs(dy) < h) {
-              const lx = (w - Math.abs(dx)) * (dx > 0 ? 1 : -1);
-              const ly = (h - Math.abs(dy)) * (dy > 0 ? 1 : -1);
-
-              const pushStrength = alpha * 0.8;
-
-              // Push along the axis of minimum penetration
-              if (Math.abs(lx) < Math.abs(ly)) {
-                a.x += lx * pushStrength;
-                b.x -= lx * pushStrength;
-              } else {
-                a.y += ly * pushStrength;
-                b.y -= ly * pushStrength;
-              }
-            }
-          }
+            return x1 > a.x + searchRadius || x2 < a.x - searchRadius || y1 > a.y + searchRadius || y2 < a.y - searchRadius;
+          });
         }
       }
     }
@@ -156,12 +241,13 @@
     const nodes = labels.map((l) => ({ ...l }));
     
     const simulation = d3.forceSimulation(nodes as any)
-      .force('x', d3.forceX((d: any) => d.targetX).strength(0.08))
-      .force('y', d3.forceY((d: any) => d.targetY).strength(0.08))
+      .force('x', d3.forceX((d: any) => d.targetX).strength(0.1))
+      .force('y', d3.forceY((d: any) => d.targetY).strength(0.1))
       .force('collide', rectCollide())
       .stop();
 
-    for (let i = 0; i < 250; ++i) simulation.tick();
+    const ticks = nodes.length > 300 ? 15 : (nodes.length > 50 ? 60 : 250);
+    for (let i = 0; i < ticks; ++i) simulation.tick();
     
     return nodes;
   }
@@ -179,6 +265,8 @@
     }
     initialLoadDone = true;
 
+    let resizeTimeout: ReturnType<typeof setTimeout> | null = null;
+
     const observer = new ResizeObserver((entries) => {
       if (!entries.length) return;
       const { width: nextWidth, height: nextHeight } = entries[0].contentRect;
@@ -187,7 +275,10 @@
       if (Math.abs(nextWidth - width) > 1 || Math.abs(resolvedHeight - height) > 1) {
         width = nextWidth;
         height = resolvedHeight;
-        drawMap();
+        if (resizeTimeout) clearTimeout(resizeTimeout);
+        resizeTimeout = setTimeout(() => {
+          drawMap();
+        }, 150);
       }
     });
 
@@ -259,6 +350,7 @@
         .attr('fill', LAND_COLOR)
         .attr('stroke', STROKE_COLOR)
         .attr('stroke-width', 0.5)
+        .attr('vector-effect', 'non-scaling-stroke')
         .on('mouseover', (event: MouseEvent, d: CountryFeature) => {
           cancelHoverClear();
           const countryName = normalizeCountryName(d.properties.name);
@@ -296,6 +388,7 @@
         });
     });
 
+    const seenLabelIds = new Set<string>();
     const baseAnchors = countries.flatMap((country: CountryFeature) => {
       const mapName = country.properties.name;
       const countryName = normalizeCountryName(mapName);
@@ -309,6 +402,12 @@
 
       return fallbackZones
         .map((zone: any) => {
+          const labelId = `${countryName}-${zone.id}`;
+          if (seenLabelIds.has(labelId)) {
+            return null;
+          }
+          seenLabelIds.add(labelId);
+
           let projected: [number, number] | null = centroid;
 
           if (zone.coords) {
@@ -323,7 +422,7 @@
           }
 
           return {
-            id: `${countryName}-${zone.id}`,
+            id: labelId,
             label: zone.label,
             timezone: zone.timezone,
             x: projected[0],
@@ -349,7 +448,7 @@
 
     zoomBehavior = d3
       .zoom<SVGSVGElement, unknown>()
-      .scaleExtent([0.5, 64])
+      .scaleExtent([MIN_ZOOM, MAX_ZOOM])
       .translateExtent([[-extentPadding, -height], [width + extentPadding, height * 2]])
       .on('zoom', (event) => {
         applyZoomTransform(event.transform);
@@ -385,6 +484,13 @@
       return;
     }
     svgSelection.transition().duration(200).call(zoomBehavior.transform, d3.zoomIdentity);
+  }
+
+  function handleSliderChange(e: Event) {
+    if (!svgSelection || !zoomBehavior) return;
+    const val = parseFloat((e.target as HTMLInputElement).value);
+    const targetScale = sliderToScale(val);
+    zoomBehavior.scaleTo(svgSelection, targetScale);
   }
 
   function handleLabelEnter(country: string) {
@@ -448,8 +554,8 @@
     }
 
     currentTransform = transform;
+    sliderValue = scaleToSlider(transform.k);
     mapGroup.attr('transform', transform.toString());
-    mapGroup.selectAll('path').attr('stroke-width', 1 / transform.k);
   }
 
   function mergeLabels(primary: RenderLabel[], secondary: RenderLabel[]) {
@@ -516,36 +622,33 @@
   <div class="map-wrapper" style={`height:${height}px`}>
     <svg bind:this={svgContainer} class="main-map"></svg>
     <svg class="overlay-layer">
-      <defs>
-        <filter id="line-glow" x="-50%" y="-50%" width="200%" height="200%">
-          <feDropShadow dx="0" dy="1" stdDeviation="1.5" flood-color="#000" flood-opacity="0.4" />
-        </filter>
-      </defs>
-      {#each arrangedLabels as label (label.id)}
-        <g filter="url(#line-glow)">
-          <line 
-            x1={label.targetX} 
-            y1={label.targetY} 
-            x2={label.x} 
-            y2={label.y} 
-            stroke="var(--map-water)" 
-            stroke-width="5" 
-            stroke-linecap="round"
-          />
-          <line 
-            x1={label.targetX} 
-            y1={label.targetY} 
-            x2={label.x} 
-            y2={label.y} 
-            stroke="var(--map-highlight)" 
-            stroke-width="2" 
-            stroke-dasharray="5 3"
-            stroke-linecap="round"
-          />
-          <circle cx={label.targetX} cy={label.targetY} r="5" fill="var(--map-water)" />
-          <circle cx={label.targetX} cy={label.targetY} r="3" fill="var(--map-highlight)" />
-        </g>
-      {/each}
+      <g>
+        {#each arrangedLabels as label (label.id)}
+          <g>
+            <line 
+              x1={label.targetX} 
+              y1={label.targetY} 
+              x2={label.x} 
+              y2={label.y} 
+              stroke="var(--map-water)" 
+              stroke-width="5" 
+              stroke-linecap="round"
+            />
+            <line 
+              x1={label.targetX} 
+              y1={label.targetY} 
+              x2={label.x} 
+              y2={label.y} 
+              stroke="var(--map-highlight)" 
+              stroke-width="2" 
+              stroke-dasharray="5 3"
+              stroke-linecap="round"
+            />
+            <circle cx={label.targetX} cy={label.targetY} r="5" fill="var(--map-water)" />
+            <circle cx={label.targetX} cy={label.targetY} r="3" fill="var(--map-highlight)" />
+          </g>
+        {/each}
+      </g>
     </svg>
     <div class="labels-layer" aria-hidden="false">
       {#each arrangedLabels as label (label.id)}
@@ -569,12 +672,25 @@
       {/each}
     </div>
     <div class="controls">
-      <button type="button" on:click={zoomIn} aria-label="Acercar">
-        +
-      </button>
-      <button type="button" on:click={zoomOut} aria-label="Alejar">
-        −
-      </button>
+      <div class="zoom-group">
+        <button type="button" on:click={zoomIn} aria-label="Acercar">
+          +
+        </button>
+        <input 
+          type="range" 
+          class="zoom-slider" 
+          min="0" 
+          max="100" 
+          step="0.1" 
+          value={sliderValue} 
+          on:input={handleSliderChange} 
+          {...{ orient: 'vertical' }} 
+          aria-label="Zoom" 
+        />
+        <button type="button" on:click={zoomOut} aria-label="Alejar">
+          −
+        </button>
+      </div>
       <button type="button" on:click={resetZoom} aria-label="Restablecer vista">
         ⟳
       </button>
@@ -584,8 +700,11 @@
       }} aria-label="Alternar tema">
         {theme === 'light' ? '🌙' : '☀️'}
       </button>
-      <button type="button" class:active={showFavorites} on:click={() => showFavorites = !showFavorites} aria-label="Favoritos">
+      <button type="button" class:active={showFavorites} on:click={() => { showFavorites = !showFavorites; showConfig = false; }} aria-label="Favoritos">
         ⭐
+      </button>
+      <button type="button" class:active={showConfig} on:click={() => { showConfig = !showConfig; showFavorites = false; }} aria-label="Configuración">
+        ⚙️
       </button>
       {#if showFavorites}
         <div class="favorites-wrapper">
@@ -593,6 +712,14 @@
             internalFavorites = internalFavorites.filter((fav) => !(fav.timezone === e.detail.timezone && fav.country === e.detail.country));
             dispatch('removeFavorite', e.detail);
           }} />
+        </div>
+      {/if}
+      {#if showConfig}
+        <div class="config-wrapper">
+          <label class="config-toggle">
+            <input type="checkbox" bind:checked={showAllTimezones} />
+            Mostrar todas las zonas
+          </label>
         </div>
       {/if}
     </div>
@@ -646,6 +773,7 @@
     flex-direction: column;
     gap: 0.35rem;
     align-items: flex-end;
+    z-index: 10;
   }
 
   .controls button {
@@ -668,6 +796,35 @@
     outline: none;
   }
 
+  .zoom-group {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    background: var(--control-bg);
+    box-shadow: 0 4px 12px rgba(15, 23, 42, 0.2);
+  }
+
+  .zoom-group button {
+    box-shadow: none;
+  }
+
+  .zoom-group button:hover,
+  .zoom-group button:focus-visible {
+    transform: none;
+    opacity: 0.8;
+  }
+
+  .zoom-slider {
+    appearance: slider-vertical;
+    -webkit-appearance: slider-vertical;
+    width: 40px;
+    height: 100px;
+    margin: 0;
+    padding: 0.25rem 0;
+    background: transparent;
+    cursor: pointer;
+  }
+
   .controls button.active {
     background: var(--accent);
     color: #fff;
@@ -677,5 +834,22 @@
     margin-top: 0.5rem;
     height: 340px;
     max-height: calc(100vh - 120px);
+  }
+
+  .config-wrapper {
+    margin-top: 0.5rem;
+    background: var(--control-bg);
+    color: var(--control-color);
+    padding: 1rem;
+    box-shadow: 0 4px 12px rgba(15, 23, 42, 0.2);
+    min-width: 200px;
+  }
+
+  .config-toggle {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    cursor: pointer;
+    font-size: 0.95rem;
   }
 </style>

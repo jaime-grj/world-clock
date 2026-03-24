@@ -4,6 +4,7 @@
  * @property {string} label
  * @property {string} timezone
  * @property {[number, number]} coords - Coordenadas [longitud, latitud]
+ * @property {string} [flagName]
  */
 
 /** @type {Record<string, CountryTimezone[]>} */
@@ -2059,22 +2060,6 @@ export const countryTimezones = {
       coords: [167.9547, -29.0408]
     }
   ],
-  'Christmas Island': [
-    {
-      id: 'cx-main',
-      label: 'Isla Christmas',
-      timezone: 'Indian/Christmas',
-      coords: [105.6904, -10.4475]
-    }
-  ],
-  'Cocos (Keeling) Islands': [
-    {
-      id: 'cc-main',
-      label: 'Islas Cocos',
-      timezone: 'Indian/Cocos',
-      coords: [96.8294, -12.1642]
-    }
-  ],
   'Heard and McDonald Islands': [
     {
       id: 'hm-main',
@@ -2376,7 +2361,31 @@ export const countryTimezones = {
       timezone: 'Antarctica/Palmer',
       coords: [-64.05, -64.7667]
     }
-  ]
+  ],
+  'Indian Ocean Ter.': [
+    {
+      id: 'cx-main',
+      label: 'Isla de Navidad',
+      timezone: 'Indian/Christmas',
+      coords: [105.6904, -10.4475],
+      flagName: 'Christmas Island'
+    },
+    {
+      id: 'cc-main',
+      label: 'Islas Cocos (Keeling)',
+      timezone: 'Indian/Cocos',
+      coords: [96.8294, -12.1642],
+      flagName: 'Cocos (Keeling) Islands'
+    }
+  ],
+  Kosovo: [
+    {
+      id: 'xk-main',
+      label: 'Kosovo',
+      timezone: 'Europe/Belgrade',
+      coords: [20.9, 42.6667]
+    }
+  ],
 };
 
 /** @type {Record<string, string>} */
@@ -2428,7 +2437,8 @@ const countryNameAliases = {
   'W. Sahara': 'Western Sahara',
   'Wallis and Futuna Is.': 'Wallis and Futuna',
   eSwatini: 'Eswatini',
-  'Ivory Coast': "Côte d'Ivoire"
+  'Ivory Coast': "Côte d'Ivoire",
+  'Ashmore and Cartier Is.': 'Australia',
 };
 
 /**
@@ -2446,6 +2456,12 @@ export function getCountryTimezones(countryName) {
   const normalizedName = normalizeCountryName(countryName);
   const entries = countryTimezones[normalizedName];
 
+  console.debug('getCountryTimezones:', {
+    originalCountryName: countryName,
+    normalizedCountryName: normalizedName,
+    timezoneEntries: entries
+  });
+
   if (!entries) {
     return [];
   }
@@ -2454,7 +2470,8 @@ export function getCountryTimezones(countryName) {
     id: entry.id,
     label: entry.label,
     timezone: entry.timezone,
-    coords: entry.coords
+    coords: entry.coords,
+    flagName: entry.flagName
   }));
 }
 

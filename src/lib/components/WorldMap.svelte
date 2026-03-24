@@ -203,7 +203,7 @@
       const centroid = path.centroid(country);
 
       return fallbackZones
-        .map((zone) => {
+        .map((zone: any) => {
           let projected: [number, number] | null = centroid;
 
           if (zone.coords) {
@@ -224,7 +224,7 @@
             x: projected[0],
             y: projected[1],
             country: countryName,
-            flag: getFlagEmoji(countryName)
+            flag: zone.flag || getFlagEmoji(zone.flagName || countryName)
           } satisfies LabelPoint;
         })
         .filter(Boolean) as LabelPoint[];
@@ -370,6 +370,14 @@
     const [lon, lat] = centroid;
     try {
       const timezone = tzLookup(lat, lon);
+      console.debug('buildFallbackZone timezone obtained:', {
+        originalCountryName: country.properties.name,
+        normalizedCountryName: normalizedName,
+        centroid,
+        lon,
+        lat,
+        timezone
+      });
       return [
         {
           id: 'auto',

@@ -194,7 +194,6 @@ const flagByCountry: Record<string, string> = {
   Niue: '🇳🇺',
   'Sint Maarten': '🇸🇽',
   France_Overseas: '🇫🇷',
-  // Más países y territorios
   'Western Sahara': '🇪🇭',
   Guadeloupe: '🇬🇵',
   Martinique: '🇲🇶',
@@ -231,7 +230,6 @@ const flagByCountry: Record<string, string> = {
   'Sao Tome and Principe': '🇸🇹',
   Gambia: '🇬🇲',
   'Western Samoa': '🇼🇸',
-  // Tonga, Kiribati y Tuvalu ya existen arriba, se eliminan duplicados
   'Saint Helena': '🇸🇭',
   'Ascension Island': '🇦🇨',
   'Tristan da Cunha': '🇹🇦',
@@ -259,8 +257,6 @@ const flagByCountry: Record<string, string> = {
   'Saint Martin (French part)': '🇲🇫',
   'South Pole': '🇦🇶',
   'Macquarie Island': '🇦🇺',
-  'South Ossetia': '🇬🇪',
-  Abkhazia: '🇬🇪',
   Kosovo: '🇽🇰',
 };
 

@@ -52,7 +52,6 @@
   let labelAnchors: LabelPoint[] = [];
   let hoveredCountry: string | null = null;
   let currentTransform: d3.ZoomTransform = d3.zoomIdentity;
-  let activePath: SVGPathElement | null = null;
   let hoverTimeout: ReturnType<typeof setTimeout> | null = null;
   let pointerOverLabel = false;
   let tileWidth = 0;
@@ -160,17 +159,20 @@
         .enter()
         .append('path')
         .attr('d', path)
+        .attr('data-country', (d: CountryFeature) => normalizeCountryName(d.properties.name))
         .attr('fill', LAND_COLOR)
         .attr('stroke', STROKE_COLOR)
         .attr('stroke-width', 0.5)
         .on('mouseover', (event: MouseEvent, d: CountryFeature) => {
           cancelHoverClear();
-          if (activePath && activePath !== event.currentTarget) {
-            d3.select(activePath).attr('fill', LAND_COLOR);
+          const countryName = normalizeCountryName(d.properties.name);
+          if (hoveredCountry && hoveredCountry !== countryName && svgSelection) {
+            svgSelection.selectAll(`path[data-country="${hoveredCountry.replace(/"/g, '\\"')}"]`).attr('fill', LAND_COLOR);
           }
-          hoveredCountry = normalizeCountryName(d.properties.name);
-          activePath = event.currentTarget as SVGPathElement;
-          d3.select(activePath).attr('fill', HIGHLIGHT_COLOR);
+          hoveredCountry = countryName;
+          if (svgSelection) {
+            svgSelection.selectAll(`path[data-country="${hoveredCountry.replace(/"/g, '\\"')}"]`).attr('fill', HIGHLIGHT_COLOR);
+          }
         })
         .on('mouseout', (event: MouseEvent) => {
           const next = event.relatedTarget as Element | null;
@@ -282,7 +284,13 @@
   function handleLabelEnter(country: string) {
     pointerOverLabel = true;
     cancelHoverClear();
+    if (hoveredCountry && hoveredCountry !== country && svgSelection) {
+      svgSelection.selectAll(`path[data-country="${hoveredCountry.replace(/"/g, '\\"')}"]`).attr('fill', LAND_COLOR);
+    }
     hoveredCountry = country;
+    if (svgSelection) {
+      svgSelection.selectAll(`path[data-country="${hoveredCountry.replace(/"/g, '\\"')}"]`).attr('fill', HIGHLIGHT_COLOR);
+    }
   }
 
   function handleLabelLeave(event: Event) {
@@ -304,11 +312,10 @@
     if (pointerOverLabel) {
       return;
     }
-    hoveredCountry = null;
-    if (activePath) {
-      d3.select(activePath).attr('fill', LAND_COLOR);
-      activePath = null;
+    if (hoveredCountry && svgSelection) {
+      svgSelection.selectAll(`path[data-country="${hoveredCountry.replace(/"/g, '\\"')}"]`).attr('fill', LAND_COLOR);
     }
+    hoveredCountry = null;
   }
 
   function scheduleHoverClear() {

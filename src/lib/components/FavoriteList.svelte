@@ -7,6 +7,7 @@
   type FavoriteZone = {
     country: string;
     timezone: string;
+    flagName?: string;
   };
 
   export let favorites: FavoriteZone[] = [];
@@ -31,7 +32,8 @@
       original: fav,
       country: fav.country,
       tz: fav.timezone,
-      label: match ? match.label : fav.country
+      label: match ? match.label : fav.country,
+      flagName: fav.flagName
     };
   });
 </script>
@@ -51,10 +53,10 @@
           <li>
             <div>
               <span class="fav-heading">
-                <span class="fav-flag">{getFlagEmoji(favorite.country)}</span>
-                <strong>{favorite.country}</strong>
+                <span class="fav-flag">{getFlagEmoji(favorite.flagName || favorite.country)}</span>
+                <strong>{favorite.label}</strong>
               </span>
-              <span class="fav-tz">{favorite.label} · {favorite.tz}</span>
+              <span class="fav-tz">{favorite.tz}</span>
               <span>{getTimeForTZ(now, favorite.tz)}</span>
             </div>
             <button on:click={() => remove(favorite.original)} aria-label={`Quitar ${favorite.label} de favoritos`}>

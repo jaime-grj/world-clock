@@ -20,6 +20,7 @@
     y: number;
     country: string;
     flag: string;
+    flagName?: string;
   };
 
   type RenderLabel = LabelPoint & { source: 'favorite' | 'hover' };
@@ -29,6 +30,7 @@
   type FavoriteZone = {
     country: string;
     timezone: string;
+    flagName?: string;
   };
 
   const dispatch = createEventDispatcher<{
@@ -194,7 +196,7 @@
           if (first) {
             const isFav = favorites.some((fav) => fav.timezone === first.timezone && fav.country === countryName);
             if (!isFav) {
-              const newFav = { country: countryName, timezone: first.timezone };
+              const newFav: FavoriteZone = { country: countryName, timezone: first.timezone, flagName: (first as any).flagName };
               favorites = [...favorites, newFav];
               dispatch('addFavorite', newFav);
             }
@@ -235,7 +237,8 @@
             x: projected[0],
             y: projected[1],
             country: countryName,
-            flag: zone.flag || getFlagEmoji(zone.flagName || countryName)
+            flag: zone.flag || getFlagEmoji(zone.flagName || countryName),
+            flagName: zone.flagName
           } satisfies LabelPoint;
         })
         .filter(Boolean) as LabelPoint[];
@@ -254,7 +257,7 @@
 
     zoomBehavior = d3
       .zoom<SVGSVGElement, unknown>()
-      .scaleExtent([1, 8])
+      .scaleExtent([1, 64])
       .translateExtent([[-extentPadding, -height], [width + extentPadding, height * 2]])
       .on('zoom', (event) => {
         applyZoomTransform(event.transform);
@@ -430,7 +433,7 @@
           on:addFavorite={() => {
             const isFav = favorites.some((fav) => fav.timezone === label.timezone && fav.country === label.country);
             if (!isFav) {
-              const newFav = { country: label.country, timezone: label.timezone };
+              const newFav: FavoriteZone = { country: label.country, timezone: label.timezone, flagName: label.flagName };
               favorites = [...favorites, newFav];
               dispatch('addFavorite', newFav);
             }

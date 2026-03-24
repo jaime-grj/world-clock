@@ -1,6 +1,7 @@
 <script lang="ts">
-	import { createEventDispatcher, onMount } from 'svelte';
+	import { createEventDispatcher } from 'svelte';
 	import { getTimeForTZ } from '$lib/utils/timezones';
+	import { currentTime } from '$lib/components/time';
 
 	export let label: string;
 	export let flag = '🏳️';
@@ -9,19 +10,6 @@
 	export let y = 0;
 
 	const dispatch = createEventDispatcher<{ addFavorite: string }>();
-	const initialTime = getTimeForTZ(new Date(), timezone);
-	let timeElement: HTMLSpanElement | null = null;
-
-	onMount(() => {
-		const update = () => {
-			if (timeElement) {
-				timeElement.textContent = getTimeForTZ(new Date(), timezone);
-			}
-		};
-		update();
-		const interval = setInterval(update, 1000);
-		return () => clearInterval(interval);
-	});
 
 	function handleFavorite() {
 		dispatch('addFavorite', timezone);
@@ -38,7 +26,7 @@
 		<span class="flag" aria-hidden="true">{flag}</span>
 		<span class="timezone">{timezone}</span>
 	</span>
-	<span class="time" bind:this={timeElement}>{initialTime}</span>
+	<span class="time">{getTimeForTZ($currentTime, timezone)}</span>
 
 </button>
 

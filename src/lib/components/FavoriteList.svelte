@@ -1,8 +1,9 @@
 <script lang="ts">
-  import { createEventDispatcher, onDestroy } from 'svelte';
+  import { createEventDispatcher } from 'svelte';
   import { getTimeForTZ } from '$lib/utils/timezones';
   import { getCountryTimezones } from '$lib/data/countryTimezones.js';
   import { getFlagEmoji } from '$lib/utils/countryFlags';
+  import { currentTime } from '$lib/components/time';
 
   type FavoriteZone = {
     country: string;
@@ -13,13 +14,6 @@
   export let favorites: FavoriteZone[] = [];
 
   const dispatch = createEventDispatcher<{ removeFavorite: FavoriteZone }>();
-
-  let now = new Date();
-  const interval = setInterval(() => {
-    now = new Date();
-  }, 1000);
-
-  onDestroy(() => clearInterval(interval));
 
   function remove(fav: FavoriteZone) {
     dispatch('removeFavorite', fav);
@@ -57,7 +51,7 @@
                 <strong>{favorite.label}</strong>
               </span>
               <span class="fav-tz">{favorite.tz}</span>
-              <span>{getTimeForTZ(now, favorite.tz)}</span>
+              <span>{getTimeForTZ($currentTime, favorite.tz)}</span>
             </div>
             <button on:click={() => remove(favorite.original)} aria-label={`Quitar ${favorite.label} de favoritos`}>
               ✕

@@ -249,26 +249,35 @@
 
                   let dx = a.x - b.x;
                   let dy = a.y - b.y;
-                  if (dx === 0 && dy === 0) {
-                    dx = (Math.random() - 0.5) * 2;
-                    dy = (Math.random() - 0.5) * 2;
-                  }
+                  
+                  // Add slight jitter to prevent perfectly straight lines and division by zero
+                  if (Math.abs(dx) < 0.1) dx += (Math.random() - 0.5) * 5 || 0.1;
+                  if (Math.abs(dy) < 0.1) dy += (Math.random() - 0.5) * 5 || 0.1;
 
                   const w = (wa + wb) / 2;
                   const h = (ha + hb) / 2;
 
                   if (Math.abs(dx) < w && Math.abs(dy) < h) {
-                    const lx = (w - Math.abs(dx)) * (dx > 0 ? 1 : -1);
-                    const ly = (h - Math.abs(dy)) * (dy > 0 ? 1 : -1);
                     const pushStrength = simNodes.length > 300 ? alpha * 1.5 : alpha * 0.8;
 
-                    if (Math.abs(lx) < Math.abs(ly)) {
-                      a.x += lx * pushStrength;
-                      b.x -= lx * pushStrength;
-                    } else {
-                      a.y += ly * pushStrength;
-                      b.y -= ly * pushStrength;
-                    }
+                    const overlapX = w - Math.abs(dx);
+                    const overlapY = h - Math.abs(dy);
+
+                    let nx = dx / w;
+                    let ny = dy / h;
+                    let len = Math.sqrt(nx * nx + ny * ny);
+
+                    nx /= len;
+                    ny /= len;
+                    
+                    // We apply a smooth force distributed across both axes
+                    const pushX = nx * overlapX * pushStrength * 0.5;
+                    const pushY = ny * overlapY * pushStrength * 0.5;
+
+                    a.x += pushX;
+                    a.y += pushY;
+                    b.x -= pushX;
+                    b.y -= pushY;
                   }
                 }
               } while ((node = node.next));

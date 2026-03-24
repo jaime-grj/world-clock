@@ -20,6 +20,8 @@
 	class="time-label"
 	style={`transform: translate(-50%, -50%); left: ${x}px; top: ${y}px;`}
 	on:click|stopPropagation={handleFavorite}
+	on:mouseenter
+	on:mouseleave
 	aria-label={`Añadir ${label} (${timezone}) a favoritos`}
 >
 	<span class="heading">

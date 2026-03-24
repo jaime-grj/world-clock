@@ -4,20 +4,7 @@
 
   type Theme = 'light' | 'dark';
 
-  let favorites: string[] = [];
   let theme: Theme = 'light';
-  const FAVORITES_KEY = 'world-clock:favorites';
-  let favoritesLoaded = false;
-
-  function addFavorite(tz: string) {
-    if (!favorites.includes(tz)) {
-      favorites = [...favorites, tz];
-    }
-  }
-
-  function removeFavorite(tz: string) {
-    favorites = favorites.filter((f) => f !== tz);
-  }
 
   function applyTheme(next: Theme) {
     if (typeof document === 'undefined') return;
@@ -29,19 +16,6 @@
     const media = window.matchMedia('(prefers-color-scheme: dark)');
     theme = media.matches ? 'dark' : 'light';
     applyTheme(theme);
-    try {
-      const stored = window.localStorage.getItem(FAVORITES_KEY);
-      if (stored) {
-        const parsed = JSON.parse(stored);
-        if (Array.isArray(parsed)) {
-          favorites = parsed.filter((item): item is string => typeof item === 'string');
-        }
-      }
-    } catch (error) {
-      console.warn('No se pudieron restaurar los favoritos', error);
-    } finally {
-      favoritesLoaded = true;
-    }
     const listener = (event: MediaQueryListEvent) => {
       theme = event.matches ? 'dark' : 'light';
     };
@@ -50,17 +24,11 @@
   });
 
   $: applyTheme(theme);
-  $: if (favoritesLoaded && typeof localStorage !== 'undefined') {
-    localStorage.setItem(FAVORITES_KEY, JSON.stringify(favorites));
-  }
 </script>
 
 <div class="fullscreen-map">
   <WorldMap
     {theme}
-    {favorites}
-    on:addFavorite={(event) => addFavorite(event.detail)}
-    on:removeFavorite={(event) => removeFavorite(event.detail)}
     on:toggleTheme={(event) => theme = event.detail}
   />
 </div>

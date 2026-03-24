@@ -81,10 +81,6 @@
 		line-height: 1;
 	}
 
-	.country {
-		font-size: 0.82rem;
-	}
-
 	.time {
 		font-variant-numeric: tabular-nums;
 		font-size: 0.9rem;

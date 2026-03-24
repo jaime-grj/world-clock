@@ -169,6 +169,7 @@
   let arrangedLabels: RenderLabel[] = [];
   let lastLabelIds = '';
   let arrangeTimeout: ReturnType<typeof setTimeout> | null = null;
+  let lastArrangedScale = 0;
 
   $: updateArrangedLabels(rawLabels);
 
@@ -194,6 +195,7 @@
         })
       );
       lastLabelIds = currentIds;
+      lastArrangedScale = currentTransform.k;
       return;
     }
 
@@ -212,6 +214,11 @@
       clearTimeout(arrangeTimeout);
     }
 
+    // If we only panned (scale is unchanged), no need to re-run the layout simulation
+    if (lastArrangedScale === currentTransform.k) {
+      return;
+    }
+
     // Let the heavy simulation settle in after interactions finish (Debouncer)
     arrangeTimeout = setTimeout(() => {
       const currentMap = new Map(arrangedLabels.map((a) => [a.id, a]));
@@ -221,6 +228,7 @@
           return { ...r, x: current ? current.x : r.x, y: current ? current.y : r.y };
         })
       );
+      lastArrangedScale = currentTransform.k;
     }, 150);
   }
 

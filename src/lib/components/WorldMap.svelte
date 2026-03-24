@@ -1,6 +1,6 @@
 <script lang="ts">
   import { onMount, createEventDispatcher } from 'svelte';
-  import { select, geoPath, geoMercator, zoom, zoomIdentity, geoCentroid, type Selection, type ZoomBehavior, type ZoomTransform } from 'd3';
+  import * as d3 from 'd3';
   import { feature } from 'topojson-client';
   import type { Feature, FeatureCollection, GeoJsonProperties, Geometry } from 'geojson';
   import type { Topology } from 'topojson-specification';
@@ -45,9 +45,9 @@
   export let theme: Theme = 'light';
   export let favorites: FavoriteZone[] = [];
 
-  function isFavorite(country: string, timezone: string): boolean {
-    return favorites.some((fav) => fav.timezone === timezone && fav.country === country);
-  }
+  const LAND_COLOR = 'var(--map-land)';
+  const STROKE_COLOR = 'var(--map-stroke)';
+  const HIGHLIGHT_COLOR = 'var(--map-highlight)';
 
   let width = 900;
   let height = 500;
@@ -55,12 +55,12 @@
   let svgContainer: SVGSVGElement;
   let containerEl: HTMLDivElement;
   let resizeObserver: ResizeObserver | null = null;
-  let svgSelection: Selection<SVGSVGElement, unknown, null, undefined> | null = null;
-  let zoomBehavior: ZoomBehavior<SVGSVGElement, unknown> | null = null;
-  let mapGroup: Selection<SVGGElement, unknown, null, undefined> | null = null;
+  let svgSelection: d3.Selection<SVGSVGElement, unknown, null, undefined> | null = null;
+  let zoomBehavior: d3.ZoomBehavior<SVGSVGElement, unknown> | null = null;
+  let mapGroup: d3.Selection<SVGGElement, unknown, null, undefined> | null = null;
   let labelAnchors: LabelPoint[] = [];
   let hoveredCountry: string | null = null;
-  let currentTransform: ZoomTransform = zoomIdentity;
+  let currentTransform: d3.ZoomTransform = d3.zoomIdentity;
   let hoverTimeout: ReturnType<typeof setTimeout> | null = null;
   let pointerOverLabel = false;
   let tileWidth = 0;
@@ -76,7 +76,7 @@
     : [];
 
   $: favoriteLabels = labelAnchors
-    .filter((label) => isFavorite(label.country, label.timezone))
+    .filter((label) => favorites.some((fav) => fav.timezone === label.timezone && fav.country === label.country))
     .map((label) => {
       const [tx, ty] = currentTransform.apply([label.x, label.y]);
       return { ...label, x: tx, y: ty, source: 'favorite' } satisfies RenderLabel;
@@ -125,11 +125,12 @@
     ) as unknown as FeatureCollection<Geometry, { name: string }>;
     const countries = featureCollection.features;
 
-    const projection = geoMercator()
+    const projection = d3
+      .geoMercator()
       .scale((width / (2 * Math.PI)) * 0.9)
       .translate([width / 2, height / 1.5]);
 
-    const path = geoPath().projection(projection);
+    const path = d3.geoPath().projection(projection);
 
     const bounds = path.bounds(featureCollection);
     tileWidth = bounds[1][0] - bounds[0][0];
@@ -138,7 +139,8 @@
       return;
     }
 
-    const svg = select(svgContainer)
+    const svg = d3
+      .select(svgContainer)
       .attr('width', width)
       .attr('height', height);
 
@@ -158,14 +160,21 @@
         .data(countries)
         .enter()
         .append('path')
-        .attr('class', 'country-path')
         .attr('d', path)
         .attr('data-country', (d: CountryFeature) => normalizeCountryName(d.properties.name))
+        .attr('fill', LAND_COLOR)
+        .attr('stroke', STROKE_COLOR)
+        .attr('stroke-width', 0.5)
         .on('mouseover', (event: MouseEvent, d: CountryFeature) => {
           cancelHoverClear();
           const countryName = normalizeCountryName(d.properties.name);
+          if (hoveredCountry && hoveredCountry !== countryName && svgSelection) {
+            svgSelection.selectAll(`path[data-country="${hoveredCountry.replace(/"/g, '\\"')}"]`).attr('fill', LAND_COLOR);
+          }
           hoveredCountry = countryName;
-          updateHighlights();
+          if (svgSelection) {
+            svgSelection.selectAll(`path[data-country="${hoveredCountry.replace(/"/g, '\\"')}"]`).attr('fill', HIGHLIGHT_COLOR);
+          }
         })
         .on('mouseout', (event: MouseEvent) => {
           const next = event.relatedTarget as Element | null;
@@ -183,7 +192,8 @@
           }
           const first = zones[0];
           if (first) {
-            if (!isFavorite(countryName, first.timezone)) {
+            const isFav = favorites.some((fav) => fav.timezone === first.timezone && fav.country === countryName);
+            if (!isFav) {
               const newFav = { country: countryName, timezone: first.timezone };
               favorites = [...favorites, newFav];
               dispatch('addFavorite', newFav);
@@ -242,7 +252,8 @@
     const horizontalExtent = tileWidth || width;
     const extentPadding = horizontalExtent * 2;
 
-    zoomBehavior = zoom<SVGSVGElement, unknown>()
+    zoomBehavior = d3
+      .zoom<SVGSVGElement, unknown>()
       .scaleExtent([1, 8])
       .translateExtent([[-extentPadding, -height], [width + extentPadding, height * 2]])
       .on('zoom', (event) => {
@@ -278,22 +289,19 @@
     if (!svgSelection || !zoomBehavior) {
       return;
     }
-    svgSelection.transition().duration(200).call(zoomBehavior.transform, zoomIdentity);
-  }
-
-  function updateHighlights() {
-    if (!svgSelection) return;
-    svgSelection.selectAll('.country-path').classed('highlight', false);
-    if (hoveredCountry) {
-      svgSelection.selectAll(`path[data-country="${hoveredCountry.replace(/"/g, '\\"')}"]`).classed('highlight', true);
-    }
+    svgSelection.transition().duration(200).call(zoomBehavior.transform, d3.zoomIdentity);
   }
 
   function handleLabelEnter(country: string) {
     pointerOverLabel = true;
     cancelHoverClear();
+    if (hoveredCountry && hoveredCountry !== country && svgSelection) {
+      svgSelection.selectAll(`path[data-country="${hoveredCountry.replace(/"/g, '\\"')}"]`).attr('fill', LAND_COLOR);
+    }
     hoveredCountry = country;
-    updateHighlights();
+    if (svgSelection) {
+      svgSelection.selectAll(`path[data-country="${hoveredCountry.replace(/"/g, '\\"')}"]`).attr('fill', HIGHLIGHT_COLOR);
+    }
   }
 
   function handleLabelLeave(event: Event) {
@@ -315,8 +323,10 @@
     if (pointerOverLabel) {
       return;
     }
+    if (hoveredCountry && svgSelection) {
+      svgSelection.selectAll(`path[data-country="${hoveredCountry.replace(/"/g, '\\"')}"]`).attr('fill', LAND_COLOR);
+    }
     hoveredCountry = null;
-    updateHighlights();
   }
 
   function scheduleHoverClear() {
@@ -337,7 +347,7 @@
     }
   }
 
-  function applyZoomTransform(transform: ZoomTransform) {
+  function applyZoomTransform(transform: d3.ZoomTransform) {
     if (!mapGroup) {
       return;
     }
@@ -363,7 +373,7 @@
   }
 
   function buildFallbackZone(country: CountryFeature, normalizedName: string) {
-    const centroid = geoCentroid(country);
+    const centroid = d3.geoCentroid(country);
     if (!centroid || centroid.some((value) => Number.isNaN(value))) {
       return [];
     }
@@ -418,7 +428,8 @@
           x={label.x}
           y={label.y}
           on:addFavorite={() => {
-        if (!isFavorite(label.country, label.timezone)) {
+            const isFav = favorites.some((fav) => fav.timezone === label.timezone && fav.country === label.country);
+            if (!isFav) {
               const newFav = { country: label.country, timezone: label.timezone };
               favorites = [...favorites, newFav];
               dispatch('addFavorite', newFav);
@@ -476,17 +487,6 @@
     box-shadow: 0 0 18px rgba(15, 23, 42, 0.15);
     display: block;
     background-color: var(--map-water);
-  }
-
-  :global(.map-tiles path.country-path) {
-    fill: var(--map-land);
-    stroke: var(--map-stroke);
-    stroke-width: 0.5px;
-    transition: fill 0.15s ease;
-  }
-
-  :global(.map-tiles path.country-path.highlight) {
-    fill: var(--map-highlight);
   }
 
   .labels-layer {

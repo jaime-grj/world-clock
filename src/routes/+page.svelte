@@ -1,12 +1,10 @@
 <script lang="ts">
   import { onMount } from 'svelte';
   import WorldMap from '$lib/components/WorldMap.svelte';
-  import FavoriteList from '$lib/components/FavoriteList.svelte';
 
   type Theme = 'light' | 'dark';
 
   let favorites: string[] = [];
-  let showFavorites = true;
   let theme: Theme = 'light';
   const FAVORITES_KEY = 'world-clock:favorites';
   let favoritesLoaded = false;
@@ -19,10 +17,6 @@
 
   function removeFavorite(tz: string) {
     favorites = favorites.filter((f) => f !== tz);
-  }
-
-  function toggleTheme() {
-    theme = theme === 'light' ? 'dark' : 'light';
   }
 
   function applyTheme(next: Theme) {
@@ -62,18 +56,13 @@
 </script>
 
 <div class="fullscreen-map">
-  <WorldMap {theme} {favorites} on:addFavorite={(event) => addFavorite(event.detail)} />
-  <div class="ui-overlay">
-    <button class="theme-toggle" type="button" on:click={toggleTheme} aria-label="Cambiar tema">
-      {theme === 'light' ? '🌙' : '☀️'}
-    </button>
-    <button class="favorites-toggle" type="button" on:click={() => showFavorites = !showFavorites} aria-label={showFavorites ? 'Ocultar favoritos' : 'Mostrar favoritos'}>
-      {showFavorites ? '✖️' : '⭐'}
-    </button>
-    {#if showFavorites}
-      <FavoriteList {favorites} on:removeFavorite={(event) => removeFavorite(event.detail)} />
-    {/if}
-  </div>
+  <WorldMap
+    {theme}
+    {favorites}
+    on:addFavorite={(event) => addFavorite(event.detail)}
+    on:removeFavorite={(event) => removeFavorite(event.detail)}
+    on:toggleTheme={(event) => theme = event.detail}
+  />
 </div>
 
 <style>
@@ -149,77 +138,7 @@
     height: 100%;
   }
 
-  .ui-overlay {
-    position: absolute;
-    top: 1.5rem;
-    right: 1.5rem;
-    display: flex;
-    flex-direction: column;
-    align-items: flex-end;
-    gap: 1rem;
-    width: min(220px, 22vw);
-    z-index: 20;
-  }
-
-  .ui-overlay :global(.favorites) {
-    max-height: min(55vh, 480px);
-  }
-
-  .theme-toggle {
-    border: none;
-    border-radius: 0;
-    width: 48px;
-    height: 48px;
-    font-size: 1.35rem;
-    background: var(--card-bg);
-    color: var(--text-color);
-    box-shadow: 0 8px 30px rgba(15, 23, 42, 0.25);
-    cursor: pointer;
-    transition: transform 150ms ease, box-shadow 150ms ease;
-  }
-
-  .favorites-toggle {
-    border: none;
-    border-radius: 0;
-    width: 48px;
-    height: 48px;
-    font-size: 1.15rem;
-    background: var(--card-bg);
-    color: var(--text-color);
-    box-shadow: 0 8px 30px rgba(15, 23, 42, 0.25);
-    cursor: pointer;
-    transition: transform 150ms ease, box-shadow 150ms ease;
-    margin-bottom: 0.5rem;
-    padding: 0 0.5rem;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    white-space: nowrap;
-  }
-
-  .favorites-toggle:hover,
-  .favorites-toggle:focus-visible {
-    transform: translateY(-2px);
-    outline: none;
-    box-shadow: 0 12px 35px rgba(15, 23, 42, 0.35);
-  }
-
-  .theme-toggle:hover,
-  .theme-toggle:focus-visible {
-    transform: translateY(-2px);
-    outline: none;
-    box-shadow: 0 12px 35px rgba(15, 23, 42, 0.35);
-  }
-
   @media (max-width: 768px) {
-    .ui-overlay {
-      position: static;
-      width: 100%;
-      align-items: stretch;
-      padding: 1rem;
-      background: linear-gradient(180deg, rgba(2, 6, 23, 0.9), rgba(2, 6, 23, 0));
-    }
-
     .fullscreen-map {
       display: flex;
       flex-direction: column;

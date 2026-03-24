@@ -8,6 +8,7 @@
   import { getCountryTimezones, normalizeCountryName } from '$lib/data/countryTimezones.js';
   import tzLookup from 'tz-lookup';
   import TimeLabel from '$lib/components/TimeLabel.svelte';
+  import FavoriteList from '$lib/components/FavoriteList.svelte';
   import { getFlagEmoji } from '$lib/utils/countryFlags';
 
   type Theme = 'light' | 'dark';
@@ -25,7 +26,11 @@
 
   type CountryFeature = Feature<Geometry, { name: string }>;
 
-  const dispatch = createEventDispatcher<{ addFavorite: string }>();
+  const dispatch = createEventDispatcher<{
+    addFavorite: string;
+    removeFavorite: string;
+    toggleTheme: Theme;
+  }>();
 
   const ASPECT_RATIO = 0.56;
   const MIN_HEIGHT = 380;
@@ -54,6 +59,7 @@
   let hoverTimeout: ReturnType<typeof setTimeout> | null = null;
   let pointerOverLabel = false;
   let tileWidth = 0;
+  let showFavorites = false;
 
   $: hoveredLabels = hoveredCountry
     ? labelAnchors
@@ -177,6 +183,9 @@
           const countryName = normalizeCountryName(d.properties.name);
           const [first] = getCountryTimezones(countryName);
           if (first) {
+            if (!favorites.includes(first.timezone)) {
+              favorites = [...favorites, first.timezone];
+            }
             dispatch('addFavorite', first.timezone);
           }
         });
@@ -399,7 +408,12 @@
           timezone={label.timezone}
           x={label.x}
           y={label.y}
-          on:addFavorite={(event) => dispatch('addFavorite', event.detail)}
+          on:addFavorite={(event) => {
+            if (!favorites.includes(event.detail)) {
+              favorites = [...favorites, event.detail];
+            }
+            dispatch('addFavorite', event.detail);
+          }}
           on:mouseenter={() => handleLabelEnter(label.country)}
           on:mouseleave={handleLabelLeave}
         />
@@ -415,6 +429,23 @@
       <button type="button" on:click={resetZoom} aria-label="Restablecer vista">
         ⟳
       </button>
+      <button type="button" on:click={() => {
+        theme = theme === 'light' ? 'dark' : 'light';
+        dispatch('toggleTheme', theme);
+      }} aria-label="Alternar tema">
+        {theme === 'light' ? '🌙' : '☀️'}
+      </button>
+      <button type="button" class:active={showFavorites} on:click={() => showFavorites = !showFavorites} aria-label="Favoritos">
+        ⭐
+      </button>
+      {#if showFavorites}
+        <div class="favorites-wrapper">
+          <FavoriteList {favorites} on:removeFavorite={(e) => {
+            favorites = favorites.filter((tz) => tz !== e.detail);
+            dispatch('removeFavorite', e.detail);
+          }} />
+        </div>
+      {/if}
     </div>
   </div>
 </div>
@@ -454,6 +485,7 @@
     display: flex;
     flex-direction: column;
     gap: 0.35rem;
+    align-items: flex-end;
   }
 
   .controls button {
@@ -474,5 +506,16 @@
   .controls button:focus-visible {
     transform: translateY(-1px);
     outline: none;
+  }
+
+  .controls button.active {
+    background: var(--accent);
+    color: #fff;
+  }
+
+  .favorites-wrapper {
+    margin-top: 0.5rem;
+    height: 340px;
+    max-height: calc(100vh - 120px);
   }
 </style>

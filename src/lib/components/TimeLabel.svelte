@@ -47,6 +47,8 @@
 		gap: 0.12rem;
 		min-width: 110px;
 		cursor: pointer;
+		width: max-content;
+		white-space: nowrap;
 		transition: transform 120ms ease, box-shadow 120ms ease;
 		box-shadow: 0 1px 4px rgba(15, 23, 42, 0.35);
 		text-align: left;

@@ -66,11 +66,9 @@
         })
     : [];
 
-  $: favoriteLabels = favorites
-    .map((timezone) => labelAnchors.find((label) => label.timezone === timezone))
-    .filter(Boolean)
-    .map((entry) => {
-      const label = entry as LabelPoint;
+  $: favoriteLabels = labelAnchors
+    .filter((label) => favorites.includes(label.timezone))
+    .map((label) => {
       const [tx, ty] = currentTransform.apply([label.x, label.y]);
       return { ...label, x: tx, y: ty, source: 'favorite' } satisfies RenderLabel;
     });
@@ -345,7 +343,7 @@
     const result: RenderLabel[] = [];
     for (const list of [primary, secondary]) {
       for (const label of list) {
-        const key = `${label.country}-${label.timezone}`;
+        const key = label.id;
         if (seen.has(key)) {
           continue;
         }

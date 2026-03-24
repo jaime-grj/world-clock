@@ -1610,7 +1610,7 @@ export const countryTimezones = {
     {
       id: 'va-main',
       label: 'Ciudad del Vaticano',
-      timezone: 'Europe/Rome',
+      timezone: 'Europe/Vatican',
       coords: [12.4534, 41.9029]
     }
   ],

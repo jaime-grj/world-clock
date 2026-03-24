@@ -107,7 +107,7 @@
         for (let i = 0, n = simNodes.length; i < n; ++i) {
           const a = simNodes[i];
           // Approx width: 7.5px per character plus 60px for flag, padding and margin
-          const wa = (a.label.length * 7.5) + 60; 
+          const wa = (a.label.length * 10) + 60; 
           const ha = 48; // Extra vertical margin
           
           for (let j = i + 1; j < n; ++j) {
@@ -516,18 +516,35 @@
   <div class="map-wrapper" style={`height:${height}px`}>
     <svg bind:this={svgContainer} class="main-map"></svg>
     <svg class="overlay-layer">
+      <defs>
+        <filter id="line-glow" x="-50%" y="-50%" width="200%" height="200%">
+          <feDropShadow dx="0" dy="1" stdDeviation="1.5" flood-color="#000" flood-opacity="0.4" />
+        </filter>
+      </defs>
       {#each arrangedLabels as label (label.id)}
-        <line 
-          x1={label.targetX} 
-          y1={label.targetY} 
-          x2={label.x} 
-          y2={label.y} 
-          stroke="var(--map-stroke)" 
-          stroke-width="1.5" 
-          stroke-dasharray="2 2"
-        />
-        <circle cx={label.targetX} cy={label.targetY} r="4" fill="var(--map-highlight)" />
-        <circle cx={label.targetX} cy={label.targetY} r="2" fill="var(--map-water)" />
+        <g filter="url(#line-glow)">
+          <line 
+            x1={label.targetX} 
+            y1={label.targetY} 
+            x2={label.x} 
+            y2={label.y} 
+            stroke="var(--map-water)" 
+            stroke-width="5" 
+            stroke-linecap="round"
+          />
+          <line 
+            x1={label.targetX} 
+            y1={label.targetY} 
+            x2={label.x} 
+            y2={label.y} 
+            stroke="var(--map-highlight)" 
+            stroke-width="2" 
+            stroke-dasharray="5 3"
+            stroke-linecap="round"
+          />
+          <circle cx={label.targetX} cy={label.targetY} r="5" fill="var(--map-water)" />
+          <circle cx={label.targetX} cy={label.targetY} r="3" fill="var(--map-highlight)" />
+        </g>
       {/each}
     </svg>
     <div class="labels-layer" aria-hidden="false">
@@ -607,6 +624,7 @@
     height: 100%;
     pointer-events: none;
     z-index: 1;
+    overflow: visible;
   }
 
   .labels-layer {

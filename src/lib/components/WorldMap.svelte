@@ -463,6 +463,8 @@
       cancelHoverClear();
       clearHover();
     });
+
+    applyZoomTransform(currentTransform);
   }
 
   function zoomIn() {

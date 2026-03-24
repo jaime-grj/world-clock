@@ -1,12 +1,17 @@
 <script lang="ts">
   import { createEventDispatcher, onDestroy } from 'svelte';
   import { getTimeForTZ } from '$lib/utils/timezones';
-  import { findTimezoneData } from '$lib/data/countryTimezones.js';
+  import { getCountryTimezones } from '$lib/data/countryTimezones.js';
   import { getFlagEmoji } from '$lib/utils/countryFlags';
 
-  export let favorites: string[] = [];
+  type FavoriteZone = {
+    country: string;
+    timezone: string;
+  };
 
-  const dispatch = createEventDispatcher<{ removeFavorite: string }>();
+  export let favorites: FavoriteZone[] = [];
+
+  const dispatch = createEventDispatcher<{ removeFavorite: FavoriteZone }>();
 
   let now = new Date();
   const interval = setInterval(() => {
@@ -15,14 +20,20 @@
 
   onDestroy(() => clearInterval(interval));
 
-  function remove(tz: string) {
-    dispatch('removeFavorite', tz);
+  function remove(fav: FavoriteZone) {
+    dispatch('removeFavorite', fav);
   }
 
-  $: favoriteDetails = favorites.map((tz) => ({
-    tz,
-    meta: findTimezoneData(tz)
-  }));
+  $: favoriteDetails = favorites.map((fav) => {
+    const zones = getCountryTimezones(fav.country);
+    const match = zones.find((z) => z.timezone === fav.timezone);
+    return {
+      original: fav,
+      country: fav.country,
+      tz: fav.timezone,
+      label: match ? match.label : fav.country
+    };
+  });
 </script>
 
 <section class="favorites">
@@ -39,18 +50,14 @@
         {#each favoriteDetails as favorite}
           <li>
             <div>
-              {#if favorite.meta}
-                <span class="fav-heading">
-                  <span class="fav-flag">{getFlagEmoji(favorite.meta.country)}</span>
-                  <strong>{favorite.meta.country}</strong>
-                </span>
-                <span class="fav-tz">{favorite.meta.label} · {favorite.tz}</span>
-              {:else}
-                <strong>{favorite.tz}</strong>
-              {/if}
+              <span class="fav-heading">
+                <span class="fav-flag">{getFlagEmoji(favorite.country)}</span>
+                <strong>{favorite.country}</strong>
+              </span>
+              <span class="fav-tz">{favorite.label} · {favorite.tz}</span>
               <span>{getTimeForTZ(now, favorite.tz)}</span>
             </div>
-            <button on:click={() => remove(favorite.tz)} aria-label={`Quitar ${favorite.tz} de favoritos`}>
+            <button on:click={() => remove(favorite.original)} aria-label={`Quitar ${favorite.label} de favoritos`}>
               ✕
             </button>
           </li>

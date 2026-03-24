@@ -26,9 +26,14 @@
 
   type CountryFeature = Feature<Geometry, { name: string }>;
 
+  type FavoriteZone = {
+    country: string;
+    timezone: string;
+  };
+
   const dispatch = createEventDispatcher<{
-    addFavorite: string;
-    removeFavorite: string;
+    addFavorite: FavoriteZone;
+    removeFavorite: FavoriteZone;
     toggleTheme: Theme;
   }>();
 
@@ -38,7 +43,7 @@
   const TILE_OFFSETS = [0, -1, 1] as const;
 
   export let theme: Theme = 'light';
-  export let favorites: string[] = [];
+  export let favorites: FavoriteZone[] = [];
 
   const LAND_COLOR = 'var(--map-land)';
   const STROKE_COLOR = 'var(--map-stroke)';
@@ -71,7 +76,7 @@
     : [];
 
   $: favoriteLabels = labelAnchors
-    .filter((label) => favorites.includes(label.timezone))
+    .filter((label) => favorites.some((fav) => fav.timezone === label.timezone && fav.country === label.country))
     .map((label) => {
       const [tx, ty] = currentTransform.apply([label.x, label.y]);
       return { ...label, x: tx, y: ty, source: 'favorite' } satisfies RenderLabel;
@@ -181,12 +186,18 @@
         })
         .on('click', (_event: MouseEvent, d: CountryFeature) => {
           const countryName = normalizeCountryName(d.properties.name);
-          const [first] = getCountryTimezones(countryName);
+          let zones = getCountryTimezones(countryName);
+          if (!zones.length) {
+            zones = buildFallbackZone(d, countryName);
+          }
+          const first = zones[0];
           if (first) {
-            if (!favorites.includes(first.timezone)) {
-              favorites = [...favorites, first.timezone];
+            const isFav = favorites.some((fav) => fav.timezone === first.timezone && fav.country === countryName);
+            if (!isFav) {
+              const newFav = { country: countryName, timezone: first.timezone };
+              favorites = [...favorites, newFav];
+              dispatch('addFavorite', newFav);
             }
-            dispatch('addFavorite', first.timezone);
           }
         });
     });
@@ -416,11 +427,13 @@
           timezone={label.timezone}
           x={label.x}
           y={label.y}
-          on:addFavorite={(event) => {
-            if (!favorites.includes(event.detail)) {
-              favorites = [...favorites, event.detail];
+          on:addFavorite={() => {
+            const isFav = favorites.some((fav) => fav.timezone === label.timezone && fav.country === label.country);
+            if (!isFav) {
+              const newFav = { country: label.country, timezone: label.timezone };
+              favorites = [...favorites, newFav];
+              dispatch('addFavorite', newFav);
             }
-            dispatch('addFavorite', event.detail);
           }}
           on:mouseenter={() => handleLabelEnter(label.country)}
           on:mouseleave={handleLabelLeave}
@@ -449,7 +462,7 @@
       {#if showFavorites}
         <div class="favorites-wrapper">
           <FavoriteList {favorites} on:removeFavorite={(e) => {
-            favorites = favorites.filter((tz) => tz !== e.detail);
+            favorites = favorites.filter((fav) => !(fav.timezone === e.detail.timezone && fav.country === e.detail.country));
             dispatch('removeFavorite', e.detail);
           }} />
         </div>

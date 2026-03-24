@@ -205,7 +205,7 @@ export const countryTimezones = {
       id: 'cn-mainland',
       label: 'China',
       timezone: 'Asia/Shanghai',
-      coords: [104.1954, 35.8617]
+      coords: [121.474, 31.219]
     }
   ],
   Japan: [

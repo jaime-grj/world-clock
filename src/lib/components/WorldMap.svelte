@@ -23,7 +23,11 @@
     flagName?: string;
   };
 
-  type RenderLabel = LabelPoint & { source: 'favorite' | 'hover' };
+  type RenderLabel = LabelPoint & {
+    source: 'favorite' | 'hover';
+    targetX: number;
+    targetY: number;
+  };
 
   type CountryFeature = Feature<Geometry, { name: string }>;
 
@@ -81,7 +85,7 @@
         .filter((label) => label.country === hoveredCountry)
         .map((label) => {
           const [tx, ty] = currentTransform.apply([label.x, label.y]);
-          return { ...label, x: tx, y: ty, source: 'hover' } satisfies RenderLabel;
+          return { ...label, x: tx, y: ty, targetX: tx, targetY: ty, source: 'hover' } satisfies RenderLabel;
         })
     : [];
 
@@ -89,10 +93,78 @@
     .filter((label) => internalFavorites.some((fav) => fav.timezone === label.timezone && fav.country === label.country))
     .map((label) => {
       const [tx, ty] = currentTransform.apply([label.x, label.y]);
-      return { ...label, x: tx, y: ty, source: 'favorite' } satisfies RenderLabel;
+      return { ...label, x: tx, y: ty, targetX: tx, targetY: ty, source: 'favorite' } satisfies RenderLabel;
     });
 
-  $: displayedLabels = mergeLabels(favoriteLabels, hoveredLabels);
+  $: rawLabels = mergeLabels(favoriteLabels, hoveredLabels);
+  $: arrangedLabels = arrangeLabels(rawLabels);
+
+  function rectCollide() {
+    let simNodes: any[];
+    
+    function force(alpha: number) {
+      for (let iter = 0; iter < 6; ++iter) {
+        for (let i = 0, n = simNodes.length; i < n; ++i) {
+          const a = simNodes[i];
+          // Approx width: 7.5px per character plus 60px for flag, padding and margin
+          const wa = (a.label.length * 7.5) + 60; 
+          const ha = 48; // Extra vertical margin
+          
+          for (let j = i + 1; j < n; ++j) {
+            const b = simNodes[j];
+            const wb = (b.label.length * 7.5) + 60;
+            const hb = 48;
+
+            let dx = a.x - b.x;
+            let dy = a.y - b.y;
+            // Add slight randomness if completely overlapped to avoid deadlocks
+            if (dx === 0 && dy === 0) {
+              dx = (Math.random() - 0.5) * 2;
+              dy = (Math.random() - 0.5) * 2;
+            }
+
+            const w = (wa + wb) / 2;
+            const h = (ha + hb) / 2;
+
+            if (Math.abs(dx) < w && Math.abs(dy) < h) {
+              const lx = (w - Math.abs(dx)) * (dx > 0 ? 1 : -1);
+              const ly = (h - Math.abs(dy)) * (dy > 0 ? 1 : -1);
+
+              const pushStrength = alpha * 0.8;
+
+              // Push along the axis of minimum penetration
+              if (Math.abs(lx) < Math.abs(ly)) {
+                a.x += lx * pushStrength;
+                b.x -= lx * pushStrength;
+              } else {
+                a.y += ly * pushStrength;
+                b.y -= ly * pushStrength;
+              }
+            }
+          }
+        }
+      }
+    }
+    
+    force.initialize = (initNodes: any[]) => { simNodes = initNodes; };
+    return force;
+  }
+
+  function arrangeLabels(labels: RenderLabel[]): RenderLabel[] {
+    if (!labels || labels.length === 0) return [];
+    
+    const nodes = labels.map((l) => ({ ...l }));
+    
+    const simulation = d3.forceSimulation(nodes as any)
+      .force('x', d3.forceX((d: any) => d.targetX).strength(0.08))
+      .force('y', d3.forceY((d: any) => d.targetY).strength(0.08))
+      .force('collide', rectCollide())
+      .stop();
+
+    for (let i = 0; i < 250; ++i) simulation.tick();
+    
+    return nodes;
+  }
 
   onMount(() => {
     if (typeof window !== 'undefined') {
@@ -442,9 +514,24 @@
 
 <div class="map-shell" bind:this={containerEl} data-theme={theme}>
   <div class="map-wrapper" style={`height:${height}px`}>
-    <svg bind:this={svgContainer}></svg>
+    <svg bind:this={svgContainer} class="main-map"></svg>
+    <svg class="overlay-layer">
+      {#each arrangedLabels as label (label.id)}
+        <line 
+          x1={label.targetX} 
+          y1={label.targetY} 
+          x2={label.x} 
+          y2={label.y} 
+          stroke="var(--map-stroke)" 
+          stroke-width="1.5" 
+          stroke-dasharray="2 2"
+        />
+        <circle cx={label.targetX} cy={label.targetY} r="4" fill="var(--map-highlight)" />
+        <circle cx={label.targetX} cy={label.targetY} r="2" fill="var(--map-water)" />
+      {/each}
+    </svg>
     <div class="labels-layer" aria-hidden="false">
-      {#each displayedLabels as label (label.id)}
+      {#each arrangedLabels as label (label.id)}
         <TimeLabel
           label={label.label}
           flag={label.flag}
@@ -506,17 +593,27 @@
     min-height: 360px;
   }
 
-  svg {
+  .main-map {
     border-radius: 0;
     box-shadow: 0 0 18px rgba(15, 23, 42, 0.15);
     display: block;
     background-color: var(--map-water);
   }
 
+  .overlay-layer {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 1;
+  }
+
   .labels-layer {
     position: absolute;
     inset: 0;
     pointer-events: none;
+    z-index: 2;
   }
 
   .labels-layer :global(.time-label) {

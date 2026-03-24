@@ -235,10 +235,7 @@ const flagByCountry: Record<string, string> = {
   'Tristan da Cunha': '🇹🇦',
   Anguilla: '🇦🇮',
   Montserrat: '🇲🇸',
-  'Saint Eustatius': '🇧🇶',
   Bonaire: '🇧🇶',
-  'Sint Eustatius': '🇧🇶',
-  Saba: '🇧🇶',
   'Heard and McDonald Islands': '🇭🇲',
   'Cocos (Keeling) Islands': '🇨🇨',
   'Christmas Island': '🇨🇽',
@@ -259,7 +256,8 @@ const flagByCountry: Record<string, string> = {
   'Macquarie Island': '🇦🇺',
   Kosovo: '🇽🇰',
   'Åland': '🇦🇽',
-  'Fr. S. Antarctic Lands': '🇹🇫'
+  'Fr. S. Antarctic Lands': '🇹🇫',
+  'Siachen Glacier': '🇮🇳 / 🇵🇰'
 };
 
 export function getFlagEmoji(countryName: string) {

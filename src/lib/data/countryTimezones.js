@@ -34,31 +34,36 @@ export const countryTimezones = {
       id: 'fr-reunion',
       label: 'Reunión',
       timezone: 'Indian/Reunion',
-      coords: [55.5364, -21.1151]
+      coords: [55.5364, -21.1151],
+      flagName: 'Réunion'
     },
     {
       id: 'yt-main',
       label: 'Mayotte',
       timezone: 'Indian/Mayotte',
-      coords: [45.1662, -12.8275]
+      coords: [45.1662, -12.8275],
+      flagName: 'Mayotte'
     },
     {
       id: 'fr-guyane',
       label: 'Guayana Francesa',
       timezone: 'America/Cayenne',
-      coords: [-52.326, 4.9224]
+      coords: [-52.326, 4.9224],
+      flagName: 'French Guiana'
     },
     {
       id: 'fr-guadeloupe',
       label: 'Guadalupe',
       timezone: 'America/Guadeloupe',
-      coords: [-61.551, 16.265]
+      coords: [-61.551, 16.265],
+      flagName: 'Guadeloupe'
     },
     {
       id: 'fr-martinique',
       label: 'Martinica',
       timezone: 'America/Martinique',
-      coords: [-61.0242, 14.6415]
+      coords: [-61.0242, 14.6415],
+      flagName: 'Martinique'
     },
   ],
   Germany: [
@@ -536,7 +541,7 @@ export const countryTimezones = {
       id: 'in-main',
       label: 'India',
       timezone: 'Asia/Kolkata',
-      coords: [77.209, 28.6139]
+      coords: [88.25, 22.57]
     }
   ],
   Russia: [
@@ -701,6 +706,20 @@ export const countryTimezones = {
       label: 'Países Bajos',
       timezone: 'Europe/Amsterdam',
       coords: [5.2913, 52.1326]
+    },
+    {
+      id: 'bq-bo',
+      label: 'Bonaire',
+      timezone: 'America/Kralendijk',
+      coords: [-68.2575, 12.1784],
+      flagName: 'Bonaire'
+    },
+    {
+      id: 'bq-se',
+      label: 'San Eustaquio',
+      timezone: 'America/Kralendijk',
+      coords: [-62.9736, 17.4894],
+      flagName: 'Bonaire'
     }
   ],
   Belgium: [
@@ -1905,30 +1924,6 @@ export const countryTimezones = {
       coords: [-13.2032, 27.1536]
     }
   ],
-  Guadeloupe: [
-    {
-      id: 'gp-main',
-      label: 'Guadalupe',
-      timezone: 'America/Guadeloupe',
-      coords: [-61.551, 16.265]
-    }
-  ],
-  Martinique: [
-    {
-      id: 'mq-main',
-      label: 'Martinica',
-      timezone: 'America/Martinique',
-      coords: [-61.0242, 14.6415]
-    }
-  ],
-  Réunion: [
-    {
-      id: 're-main',
-      label: 'Reunión',
-      timezone: 'Indian/Reunion',
-      coords: [55.5364, -21.1151]
-    }
-  ],
   Guernsey: [
     {
       id: 'gg-main',
@@ -2128,30 +2123,6 @@ export const countryTimezones = {
       label: 'San Martín (Francia)',
       timezone: 'America/Marigot',
       coords: [-63.0822, 18.0708]
-    }
-  ],
-  'Sint Eustatius': [
-    {
-      id: 'bq-se',
-      label: 'San Eustaquio',
-      timezone: 'America/Kralendijk',
-      coords: [-62.9736, 17.4894]
-    }
-  ],
-  'Saba': [
-    {
-      id: 'bq-sa',
-      label: 'Saba',
-      timezone: 'America/Kralendijk',
-      coords: [-63.2295, 17.6355]
-    }
-  ],
-  'Bonaire': [
-    {
-      id: 'bq-bo',
-      label: 'Bonaire',
-      timezone: 'America/Kralendijk',
-      coords: [-68.2575, 12.1784]
     }
   ],
   'Saint Barthélemy': [

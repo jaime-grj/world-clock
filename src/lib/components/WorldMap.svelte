@@ -86,6 +86,47 @@
   let d3Path: any = null;
   let d3Projection: any = null;
 
+  function highlightCountry(country: string) {
+    cancelHoverClear();
+    if (hoveredCountry && hoveredCountry !== country && svgSelection) {
+      svgSelection.selectAll(`path[data-country="${hoveredCountry.replace(/"/g, '\\"')}"]`).attr('fill', LAND_COLOR);
+    }
+    hoveredCountry = country;
+    if (svgSelection) {
+      svgSelection.selectAll(`path[data-country="${hoveredCountry.replace(/"/g, '\\"')}"]`).attr('fill', HIGHLIGHT_COLOR);
+    }
+  }
+
+  function addFavoriteZone(country: string, timezone: string, flagName?: string) {
+    const isFav = internalFavorites.some((fav) => fav.timezone === timezone && fav.country === country);
+    if (!isFav) {
+      const newFav: FavoriteZone = { country, timezone, flagName };
+      internalFavorites = [...internalFavorites, newFav];
+      dispatch('addFavorite', newFav);
+    }
+  }
+
+  function handleRemoveFavorite(e: CustomEvent<FavoriteZone>) {
+    const { timezone, country } = e.detail;
+    internalFavorites = internalFavorites.filter((fav) => !(fav.timezone === timezone && fav.country === country));
+    dispatch('removeFavorite', e.detail);
+  }
+
+  function handleToggleTheme() {
+    theme = theme === 'light' ? 'dark' : 'light';
+    dispatch('toggleTheme', theme);
+  }
+
+  function handleToggleFavorites() {
+    showFavorites = !showFavorites;
+    showConfig = false;
+  }
+
+  function handleToggleConfig() {
+    showConfig = !showConfig;
+    showFavorites = false;
+  }
+
   function scaleToSlider(k: number) {
     return (Math.log(k / MIN_ZOOM) / Math.log(MAX_ZOOM / MIN_ZOOM)) * 100;
   }
@@ -365,15 +406,7 @@
         .attr('stroke-width', 0.5)
         .attr('vector-effect', 'non-scaling-stroke')
         .on('mouseover', (event: MouseEvent, d: CountryFeature) => {
-          cancelHoverClear();
-          const countryName = normalizeCountryName(d.properties.name);
-          if (hoveredCountry && hoveredCountry !== countryName && svgSelection) {
-            svgSelection.selectAll(`path[data-country="${hoveredCountry.replace(/"/g, '\\"')}"]`).attr('fill', LAND_COLOR);
-          }
-          hoveredCountry = countryName;
-          if (svgSelection) {
-            svgSelection.selectAll(`path[data-country="${hoveredCountry.replace(/"/g, '\\"')}"]`).attr('fill', HIGHLIGHT_COLOR);
-          }
+          highlightCountry(normalizeCountryName(d.properties.name));
         })
         .on('mouseout', (event: MouseEvent) => {
           const next = event.relatedTarget as Element | null;
@@ -391,12 +424,7 @@
           }
           const first = zones[0];
           if (first) {
-            const isFav = internalFavorites.some((fav) => fav.timezone === first.timezone && fav.country === countryName);
-            if (!isFav) {
-              const newFav: FavoriteZone = { country: countryName, timezone: first.timezone, flagName: (first as any).flagName };
-              internalFavorites = [...internalFavorites, newFav];
-              dispatch('addFavorite', newFav);
-            }
+          addFavoriteZone(countryName, first.timezone, (first as any).flagName);
           }
         });
     });
@@ -514,14 +542,7 @@
 
   function handleLabelEnter(country: string) {
     pointerOverLabel = true;
-    cancelHoverClear();
-    if (hoveredCountry && hoveredCountry !== country && svgSelection) {
-      svgSelection.selectAll(`path[data-country="${hoveredCountry.replace(/"/g, '\\"')}"]`).attr('fill', LAND_COLOR);
-    }
-    hoveredCountry = country;
-    if (svgSelection) {
-      svgSelection.selectAll(`path[data-country="${hoveredCountry.replace(/"/g, '\\"')}"]`).attr('fill', HIGHLIGHT_COLOR);
-    }
+    highlightCountry(country);
   }
 
   function handleLabelLeave(event: Event) {
@@ -706,14 +727,7 @@
           timezone={label.timezone}
           x={label.x}
           y={label.y}
-          on:addFavorite={() => {
-            const isFav = internalFavorites.some((fav) => fav.timezone === label.timezone && fav.country === label.country);
-            if (!isFav) {
-              const newFav: FavoriteZone = { country: label.country, timezone: label.timezone, flagName: label.flagName };
-              internalFavorites = [...internalFavorites, newFav];
-              dispatch('addFavorite', newFav);
-            }
-          }}
+          on:addFavorite={() => addFavoriteZone(label.country, label.timezone, label.flagName)}
           on:mouseenter={() => handleLabelEnter(label.country)}
           on:mouseleave={handleLabelLeave}
         />
@@ -742,24 +756,21 @@
       <button type="button" on:click={resetZoom} aria-label="Restablecer vista">
         ⟳
       </button>
-      <button type="button" on:click={() => {
-        theme = theme === 'light' ? 'dark' : 'light';
-        dispatch('toggleTheme', theme);
-      }} aria-label="Alternar tema">
+      <button type="button" on:click={handleToggleTheme} aria-label="Alternar tema">
         {theme === 'light' ? '🌙' : '☀️'}
       </button>
-      <button type="button" class:active={showFavorites} on:click={() => { showFavorites = !showFavorites; showConfig = false; }} aria-label="Favoritos">
+      <button type="button" class:active={showFavorites} on:click={handleToggleFavorites} aria-label="Favoritos">
         ⭐
       </button>
-      <button type="button" class:active={showConfig} on:click={() => { showConfig = !showConfig; showFavorites = false; }} aria-label="Configuración">
+      <button type="button" class:active={showConfig} on:click={handleToggleConfig} aria-label="Configuración">
         ⚙️
       </button>
       {#if showFavorites}
         <div class="favorites-wrapper">
-          <FavoriteList favorites={internalFavorites} on:removeFavorite={(e) => {
-            internalFavorites = internalFavorites.filter((fav) => !(fav.timezone === e.detail.timezone && fav.country === e.detail.country));
-            dispatch('removeFavorite', e.detail);
-          }} />
+          <FavoriteList 
+            favorites={internalFavorites} 
+            on:removeFavorite={handleRemoveFavorite} 
+          />
         </div>
       {/if}
       {#if showConfig}

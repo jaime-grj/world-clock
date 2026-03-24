@@ -229,6 +229,12 @@ export const countryTimezones = {
       label: 'Australia Oeste',
       timezone: 'Australia/Perth',
       coords: [115.8575, -31.9505]
+    },
+    {
+      id: 'au-macquarie',
+      label: 'Isla Macquarie',
+      timezone: 'Antarctica/Macquarie',
+      coords: [158.95, -54.5]
     }
   ],
   Canada: [
@@ -2156,22 +2162,6 @@ export const countryTimezones = {
       coords: [-62.8333, 17.9]
     }
   ],
-  'South Pole': [
-    {
-      id: 'aq-pole',
-      label: 'Polo Sur',
-      timezone: 'Antarctica/South_Pole',
-      coords: [0, -90]
-    }
-  ],
-  'Macquarie Island': [
-    {
-      id: 'au-macquarie',
-      label: 'Isla Macquarie',
-      timezone: 'Antarctica/Macquarie',
-      coords: [158.95, -54.5]
-    }
-  ],
   Benin: [
     {
       id: 'bj-main',
@@ -2368,6 +2358,12 @@ export const countryTimezones = {
       label: 'Antártida (Palmer)',
       timezone: 'Antarctica/Palmer',
       coords: [-64.05, -64.7667]
+    },
+    {
+      id: 'aq-pole',
+      label: 'Polo Sur',
+      timezone: 'Antarctica/South_Pole',
+      coords: [0, -85]
     }
   ],
   'Indian Ocean Ter.': [

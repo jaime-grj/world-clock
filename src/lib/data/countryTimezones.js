@@ -28,7 +28,37 @@ export const countryTimezones = {
       label: 'Francia',
       timezone: 'Europe/Paris',
       coords: [2.2137, 46.2276]
-    }
+    },
+    {
+      id: 'fr-reunion',
+      label: 'Reunión',
+      timezone: 'Indian/Reunion',
+      coords: [55.5364, -21.1151]
+    },
+    {
+      id: 'yt-main',
+      label: 'Mayotte',
+      timezone: 'Indian/Mayotte',
+      coords: [45.1662, -12.8275]
+    },
+    {
+      id: 'fr-guyane',
+      label: 'Guayana Francesa',
+      timezone: 'America/Cayenne',
+      coords: [-52.326, 4.9224]
+    },
+    {
+      id: 'fr-guadeloupe',
+      label: 'Guadalupe',
+      timezone: 'America/Guadeloupe',
+      coords: [-61.551, 16.265]
+    },
+    {
+      id: 'fr-martinique',
+      label: 'Martinica',
+      timezone: 'America/Martinique',
+      coords: [-61.0242, 14.6415]
+    },
   ],
   Germany: [
     {
@@ -1852,47 +1882,14 @@ export const countryTimezones = {
       coords: [-63.0548, 18.0425]
     }
   ],
-  France_Overseas: [
-    {
-      id: 'fr-reunion',
-      label: 'Reunión',
-      timezone: 'Indian/Reunion',
-      coords: [55.5364, -21.1151]
-    },
-    {
-      id: 'fr-guadeloupe',
-      label: 'Guadalupe',
-      timezone: 'America/Guadeloupe',
-      coords: [-61.551, 16.265]
-    },
-    {
-      id: 'fr-martinique',
-      label: 'Martinica',
-      timezone: 'America/Martinique',
-      coords: [-61.0242, 14.6415]
-    },
-    {
-      id: 'fr-guyane',
-      label: 'Guayana Francesa',
-      timezone: 'America/Cayenne',
-      coords: [-52.326, 4.9224]
-    },
+  'French Polynesia': [
     {
       id: 'fr-tahiti',
       label: 'Polinesia Francesa (Tahití)',
       timezone: 'Pacific/Tahiti',
       coords: [-149.4068, -17.6509]
-    },
-    {
-      id: 'fr-noumea',
-      label: 'Nueva Caledonia (Numea)',
-      timezone: 'Pacific/Noumea',
-      coords: [166.4572, -22.2758]
     }
   ],
-  // Puedes extender esta tabla con más países y zonas horarias.
-
-  // Ejemplos de zonas horarias faltantes:
   'Western Sahara': [
     {
       id: 'eh-main',
@@ -1923,14 +1920,6 @@ export const countryTimezones = {
       label: 'Reunión',
       timezone: 'Indian/Reunion',
       coords: [55.5364, -21.1151]
-    }
-  ],
-  Mayotte: [
-    {
-      id: 'yt-main',
-      label: 'Mayotte',
-      timezone: 'Indian/Mayotte',
-      coords: [45.1662, -12.8275]
     }
   ],
   Guernsey: [
@@ -1995,22 +1984,6 @@ export const countryTimezones = {
       label: 'Wallis y Futuna',
       timezone: 'Pacific/Wallis',
       coords: [-176.2, -13.3]
-    }
-  ],
-  'French Guiana': [
-    {
-      id: 'gf-main',
-      label: 'Guayana Francesa',
-      timezone: 'America/Cayenne',
-      coords: [-52.326, 4.9224]
-    }
-  ],
-  'French Polynesia': [
-    {
-      id: 'pf-main',
-      label: 'Polinesia Francesa',
-      timezone: 'Pacific/Tahiti',
-      coords: [-149.4068, -17.6509]
     }
   ],
   'New Caledonia': [
@@ -2205,6 +2178,204 @@ export const countryTimezones = {
       timezone: 'Antarctica/Macquarie',
       coords: [158.95, -54.5]
     }
+  ],
+  Benin: [
+    {
+      id: 'bj-main',
+      label: 'Benín',
+      timezone: 'Africa/Porto-Novo',
+      coords: [2.6051, 6.4969]
+    }
+  ],
+  'Burkina Faso': [
+    {
+      id: 'bf-main',
+      label: 'Burkina Faso',
+      timezone: 'Africa/Ouagadougou',
+      coords: [-1.5339, 12.3686]
+    }
+  ],
+  Burundi: [
+    {
+      id: 'bi-main',
+      label: 'Burundi',
+      timezone: 'Africa/Bujumbura',
+      coords: [29.3644, -3.3822]
+    }
+  ],
+  'Central African Republic': [
+    {
+      id: 'cf-main',
+      label: 'República Centroafricana',
+      timezone: 'Africa/Bangui',
+      coords: [18.5582, 4.3947]
+    }
+  ],
+  Chad: [
+    {
+      id: 'td-main',
+      label: 'Chad',
+      timezone: 'Africa/Ndjamena',
+      coords: [15.05, 12.1131]
+    }
+  ],
+  Comoros: [
+    {
+      id: 'km-main',
+      label: 'Comoras',
+      timezone: 'Indian/Comoro',
+      coords: [43.2551, -11.6455]
+    }
+  ],
+  "Côte d'Ivoire": [
+    {
+      id: 'ci-main',
+      label: 'Costa de Marfil',
+      timezone: 'Africa/Abidjan',
+      coords: [-4.0083, 5.3097]
+    }
+  ],
+  Gambia: [
+    {
+      id: 'gm-main',
+      label: 'Gambia',
+      timezone: 'Africa/Banjul',
+      coords: [-16.579, 13.4549]
+    }
+  ],
+  Guinea: [
+    {
+      id: 'gn-main',
+      label: 'Guinea',
+      timezone: 'Africa/Conakry',
+      coords: [-13.6773, 9.5092]
+    }
+  ],
+  'Guinea-Bissau': [
+    {
+      id: 'gw-main',
+      label: 'Guinea-Bisáu',
+      timezone: 'Africa/Bissau',
+      coords: [-15.6, 11.85]
+    }
+  ],
+  Liberia: [
+    {
+      id: 'lr-main',
+      label: 'Liberia',
+      timezone: 'Africa/Monrovia',
+      coords: [-10.7969, 6.3156]
+    }
+  ],
+  Mauritania: [
+    {
+      id: 'mr-main',
+      label: 'Mauritania',
+      timezone: 'Africa/Nouakchott',
+      coords: [-15.9754, 18.0735]
+    }
+  ],
+  Niger: [
+    {
+      id: 'ne-main',
+      label: 'Níger',
+      timezone: 'Africa/Niamey',
+      coords: [2.1098, 13.5116]
+    }
+  ],
+  'Sao Tome and Principe': [
+    {
+      id: 'st-main',
+      label: 'Santo Tomé y Príncipe',
+      timezone: 'Africa/Sao_Tome',
+      coords: [6.7273, 0.3302]
+    }
+  ],
+  'Sierra Leone': [
+    {
+      id: 'sl-main',
+      label: 'Sierra Leona',
+      timezone: 'Africa/Freetown',
+      coords: [-13.2317, 8.4844]
+    }
+  ],
+  Togo: [
+    {
+      id: 'tg-main',
+      label: 'Togo',
+      timezone: 'Africa/Lome',
+      coords: [1.2125, 6.1375]
+    }
+  ],
+  Montserrat: [
+    {
+      id: 'ms-main',
+      label: 'Montserrat',
+      timezone: 'America/Montserrat',
+      coords: [-62.1874, 16.7425]
+    }
+  ],
+  Anguilla: [
+    {
+      id: 'ai-main',
+      label: 'Anguila',
+      timezone: 'America/Anguilla',
+      coords: [-63.0686, 18.2206]
+    }
+  ],
+  'American Samoa': [
+    {
+      id: 'as-main',
+      label: 'Samoa Americana',
+      timezone: 'Pacific/Pago_Pago',
+      coords: [-170.702, -14.271]
+    }
+  ],
+  Guam: [
+    {
+      id: 'gu-main',
+      label: 'Guam',
+      timezone: 'Pacific/Guam',
+      coords: [144.7937, 13.4443]
+    }
+  ],
+  'Northern Mariana Islands': [
+    {
+      id: 'mp-main',
+      label: 'Islas Marianas del Norte',
+      timezone: 'Pacific/Saipan',
+      coords: [145.7605, 15.1909]
+    }
+  ],
+  Tokelau: [
+    {
+      id: 'tk-main',
+      label: 'Tokelau',
+      timezone: 'Pacific/Fakaofo',
+      coords: [-171.2188, -9.3803]
+    }
+  ],
+  'British Indian Ocean Territory': [
+    {
+      id: 'io-main',
+      label: 'Territorio Británico del Océano Índico',
+      timezone: 'Indian/Chagos',
+      coords: [72.4, -6.0]
+    }
+  ],
+  Antarctica: [
+    {
+      id: 'aq-mcmurdo',
+      label: 'Antártida (McMurdo)',
+      timezone: 'Antarctica/McMurdo',
+      coords: [166.6667, -77.85]
+    },
+    {
+      id: 'aq-palmer',
+      label: 'Antártida (Palmer)',
+      timezone: 'Antarctica/Palmer',
+      coords: [-64.05, -64.7667]
+    }
   ]
 };
 
@@ -2215,6 +2386,7 @@ const countryNameAliases = {
   'British Virgin Is.': 'British Virgin Islands',
   'Cabo Verde': 'Cape Verde',
   'Cayman Is.': 'Cayman Islands',
+  'Central African Rep.': 'Central African Republic',
   Congo: 'Republic of the Congo',
   'Cook Is.': 'Cook Islands',
   'Curaçao': 'Curacao',
@@ -2226,25 +2398,37 @@ const countryNameAliases = {
   'Falkland Is.': 'Falkland Islands',
   'Fr. Polynesia': 'French Polynesia',
   'Heard I. and McDonald Is.': 'Heard and McDonald Islands',
+  'Br. Indian Ocean Ter.': 'British Indian Ocean Territory',
   'Isle of Man': 'Isle_of_Man',
   Macao: 'Macau',
   Macedonia: 'North Macedonia',
   'Marshall Is.': 'Marshall Islands',
+  'N. Cyprus': 'Cyprus',
+  'N. Mariana Is.': 'Northern Mariana Islands',
   'Pitcairn Is.': 'Pitcairn Islands',
   'S. Geo. and the Is.': 'South Georgia and the South Sandwich Islands',
   'S. Sudan': 'South Sudan',
   'Solomon Is.': 'Solomon Islands',
+  Somaliland: 'Somalia',
+  'São Tomé and Principe': 'Sao Tome and Principe',
   'St-Barthélemy': 'Saint Barthélemy',
   'St-Martin': 'Saint Martin',
   'St. Kitts and Nevis': 'Saint Kitts and Nevis',
   'St. Pierre and Miquelon': 'Saint Pierre and Miquelon',
   'St. Vin. and Gren.': 'Saint Vincent and the Grenadines',
+  'The Bahamas': 'Bahamas',
+  'The Gambia': 'Gambia',
   'Turks and Caicos Is.': 'Turks and Caicos Islands',
+  'U.S. Minor Outlying Is.': 'US Minor Outlying Islands',
   'U.S. Virgin Is.': 'US Virgin Islands',
+  UK: 'United Kingdom',
+  'United States': 'United States of America',
+  USA: 'United States of America',
   Vatican: 'Vatican City',
   'W. Sahara': 'Western Sahara',
   'Wallis and Futuna Is.': 'Wallis and Futuna',
-  eSwatini: 'Eswatini'
+  eSwatini: 'Eswatini',
+  'Ivory Coast': "Côte d'Ivoire"
 };
 
 /**

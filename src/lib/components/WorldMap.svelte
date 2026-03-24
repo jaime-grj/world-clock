@@ -357,6 +357,7 @@
 
     currentTransform = transform;
     mapGroup.attr('transform', transform.toString());
+    mapGroup.selectAll('path').attr('stroke-width', 1 / transform.k);
   }
 
   function mergeLabels(primary: RenderLabel[], secondary: RenderLabel[]) {

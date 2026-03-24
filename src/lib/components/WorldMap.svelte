@@ -36,7 +36,6 @@
   export let favorites: string[] = [];
 
   const LAND_COLOR = 'var(--map-land)';
-  const WATER_COLOR = 'var(--map-water)';
   const STROKE_COLOR = 'var(--map-stroke)';
   const HIGHLIGHT_COLOR = 'var(--map-highlight)';
 
@@ -138,14 +137,6 @@
     svg.selectAll('*').remove();
 
     mapGroup = svg.append('g').attr('class', 'map-content');
-
-    const waterWidth = tileWidth * TILE_OFFSETS.length || width;
-    mapGroup
-      .append('rect')
-      .attr('x', -tileWidth || 0)
-      .attr('width', waterWidth)
-      .attr('height', height)
-      .attr('fill', WATER_COLOR);
 
     const tilesGroup = mapGroup.append('g').attr('class', 'map-tiles');
 
@@ -443,6 +434,7 @@
     border-radius: 0;
     box-shadow: 0 0 18px rgba(15, 23, 42, 0.15);
     display: block;
+    background-color: var(--map-water);
   }
 
   .labels-layer {

@@ -277,7 +277,7 @@
 
     zoomBehavior = d3
       .zoom<SVGSVGElement, unknown>()
-      .scaleExtent([1, 64])
+      .scaleExtent([0.5, 64])
       .translateExtent([[-extentPadding, -height], [width + extentPadding, height * 2]])
       .on('zoom', (event) => {
         applyZoomTransform(event.transform);

@@ -2335,6 +2335,54 @@ export const countryTimezones = {
       label: 'Polo Sur',
       timezone: 'Antarctica/South_Pole',
       coords: [0, -85]
+    },
+    {
+      id: 'aq-rothera',
+      label: 'Antártida (Rothera)',
+      timezone: 'Antarctica/Rothera',
+      coords: [-68.1247, -67.5689]
+    },
+    {
+      id: 'aq-troll',
+      label: 'Antártida (Troll)',
+      timezone: 'Antarctica/Troll',
+      coords: [2.5350, -72.0117]
+    },
+    {
+      id: 'aq-syowa',
+      label: 'Antártida (Syowa)',
+      timezone: 'Antarctica/Syowa',
+      coords: [39.5817, -69.0061]
+    },
+    {
+      id: 'aq-mawson',
+      label: 'Antártida (Mawson)',
+      timezone: 'Antarctica/Mawson',
+      coords: [62.8736, -67.6028]
+    },
+    {
+      id: 'aq-vostok',
+      label: 'Antártida (Vostok)',
+      timezone: 'Antarctica/Vostok',
+      coords: [106.8375, -78.4639]
+    },
+    {
+      id: 'aq-davis',
+      label: 'Antártida (Davis)',
+      timezone: 'Antarctica/Davis',
+      coords: [77.9675, -68.5767]
+    },
+    {
+      id: 'aq-casey',
+      label: 'Antártida (Casey)',
+      timezone: 'Antarctica/Casey',
+      coords: [110.5256, -66.2819]
+    },
+    {
+      id: 'aq-dumontdurville',
+      label: "Antártida (Dumont d'Urville)",
+      timezone: 'Antarctica/DumontDUrville',
+      coords: [140.0014, -66.6628]
     }
   ],
   'Indian Ocean Ter.': [

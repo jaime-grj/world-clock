@@ -67,6 +67,14 @@
   let pointerOverLabel = false;
   let tileWidth = 0;
   let showFavorites = false;
+  let initialLoadDone = false;
+  let internalFavorites: FavoriteZone[] = [];
+
+  $: {
+    if (initialLoadDone && typeof window !== 'undefined') {
+      window.localStorage.setItem('world-clock-favorites', JSON.stringify(internalFavorites));
+    }
+  }
 
   $: hoveredLabels = hoveredCountry
     ? labelAnchors
@@ -78,7 +86,7 @@
     : [];
 
   $: favoriteLabels = labelAnchors
-    .filter((label) => favorites.some((fav) => fav.timezone === label.timezone && fav.country === label.country))
+    .filter((label) => internalFavorites.some((fav) => fav.timezone === label.timezone && fav.country === label.country))
     .map((label) => {
       const [tx, ty] = currentTransform.apply([label.x, label.y]);
       return { ...label, x: tx, y: ty, source: 'favorite' } satisfies RenderLabel;
@@ -87,6 +95,18 @@
   $: displayedLabels = mergeLabels(favoriteLabels, hoveredLabels);
 
   onMount(() => {
+    if (typeof window !== 'undefined') {
+      const savedFavorites = window.localStorage.getItem('world-clock-favorites');
+      if (savedFavorites) {
+        try {
+          internalFavorites = JSON.parse(savedFavorites);
+        } catch (e) {}
+      } else {
+        internalFavorites = favorites;
+      }
+    }
+    initialLoadDone = true;
+
     const observer = new ResizeObserver((entries) => {
       if (!entries.length) return;
       const { width: nextWidth, height: nextHeight } = entries[0].contentRect;
@@ -194,10 +214,10 @@
           }
           const first = zones[0];
           if (first) {
-            const isFav = favorites.some((fav) => fav.timezone === first.timezone && fav.country === countryName);
+            const isFav = internalFavorites.some((fav) => fav.timezone === first.timezone && fav.country === countryName);
             if (!isFav) {
               const newFav: FavoriteZone = { country: countryName, timezone: first.timezone, flagName: (first as any).flagName };
-              favorites = [...favorites, newFav];
+              internalFavorites = [...internalFavorites, newFav];
               dispatch('addFavorite', newFav);
             }
           }
@@ -432,10 +452,10 @@
           x={label.x}
           y={label.y}
           on:addFavorite={() => {
-            const isFav = favorites.some((fav) => fav.timezone === label.timezone && fav.country === label.country);
+            const isFav = internalFavorites.some((fav) => fav.timezone === label.timezone && fav.country === label.country);
             if (!isFav) {
               const newFav: FavoriteZone = { country: label.country, timezone: label.timezone, flagName: label.flagName };
-              favorites = [...favorites, newFav];
+              internalFavorites = [...internalFavorites, newFav];
               dispatch('addFavorite', newFav);
             }
           }}
@@ -465,8 +485,8 @@
       </button>
       {#if showFavorites}
         <div class="favorites-wrapper">
-          <FavoriteList {favorites} on:removeFavorite={(e) => {
-            favorites = favorites.filter((fav) => !(fav.timezone === e.detail.timezone && fav.country === e.detail.country));
+          <FavoriteList favorites={internalFavorites} on:removeFavorite={(e) => {
+            internalFavorites = internalFavorites.filter((fav) => !(fav.timezone === e.detail.timezone && fav.country === e.detail.country));
             dispatch('removeFavorite', e.detail);
           }} />
         </div>

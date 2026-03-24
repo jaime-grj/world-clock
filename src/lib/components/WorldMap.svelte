@@ -48,7 +48,7 @@
   const MAX_VIEWPORT_RATIO = 0.8;
   const TILE_OFFSETS = [0, -1, 1] as const;
   const MIN_ZOOM = 0.5;
-  const MAX_ZOOM = 64;
+  const MAX_ZOOM = 128;
 
   export let theme: Theme = 'light';
   export let favorites: FavoriteZone[] = [];

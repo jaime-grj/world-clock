@@ -1,5 +1,6 @@
 <script lang="ts">
   import { createEventDispatcher } from 'svelte';
+  import { slide } from 'svelte/transition';
   import { getTimeForTZ } from '$lib/utils/timezones';
   import { getCountryTimezones } from '$lib/data/countryTimezones.js';
   import { getFlagEmoji } from '$lib/utils/countryFlags';
@@ -43,8 +44,8 @@
       <p class="empty">Haz clic en una etiqueta del mapa para guardarla aquí.</p>
     {:else}
       <ul>
-        {#each favoriteDetails as favorite}
-          <li>
+        {#each favoriteDetails as favorite (`${favorite.country}-${favorite.tz}`)}
+          <li transition:slide|local={{ duration: 200 }}>
             <div>
               <span class="fav-heading">
                 <span class="fav-flag">{getFlagEmoji(favorite.flagName || favorite.country)}</span>

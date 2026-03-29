@@ -1,5 +1,7 @@
 <script lang="ts">
   import { createEventDispatcher } from 'svelte';
+  import { currentTime } from '$lib/stores/time';
+  import { getTimeForTZ, getUTCOffset } from '$lib/utils/timezones';
 
   type LabelPoint = {
     id: string;
@@ -64,11 +66,17 @@
   />
   {#if showSearchResults}
     <ul class="search-results">
-      {#each searchResults as result}
+      {#each searchResults as result (result.id)}
         <li>
           <button type="button" on:click={() => handleSelect(result)}>
-            <span class="flag">{result.flag}</span>
-            <span class="name">{result.label} <span class="country-name">({result.country})</span></span>
+            <div class="result-info">
+              <span class="flag">{result.flag}</span>
+              <span class="name">{result.timezone} <span class="country-name">({result.country})</span></span>
+            </div>
+            <div class="result-time">
+              <span class="time">{getTimeForTZ($currentTime, result.timezone)}</span>
+              <span class="offset">{getUTCOffset($currentTime, result.timezone)}</span>
+            </div>
           </button>
         </li>
       {/each}
@@ -85,7 +93,7 @@
     top: 0.75rem;
     left: 0.75rem;
     z-index: 10;
-    width: 280px;
+    width: 360px;
     display: flex;
     flex-direction: column;
     gap: 0.35rem;
@@ -130,7 +138,8 @@
     cursor: pointer;
     display: flex;
     align-items: center;
-    gap: 0.5rem;
+    justify-content: space-between;
+    gap: 0.75rem;
     font-size: 0.9rem;
     transition: background 120ms ease;
   }
@@ -140,8 +149,31 @@
     color: #fff;
     outline: none;
   }
+  .result-info {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    overflow: hidden;
+  }
+  .name {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .result-time {
+    text-align: right;
+    font-family: 'JetBrains Mono', 'SFMono-Regular', ui-monospace, 'Cascadia Code', monospace;
+    flex-shrink: 0;
+  }
+  .time {
+    display: block;
+    font-size: 0.9rem;
+    font-variant-numeric: tabular-nums;
+  }
   .search-results button:hover .country-name,
-  .search-results button:focus-visible .country-name {
+  .search-results button:focus-visible .country-name,
+  .search-results button:hover .offset,
+  .search-results button:focus-visible .offset {
     color: rgba(255, 255, 255, 0.8);
   }
   .country-name {
@@ -152,5 +184,10 @@
     padding: 0.6rem 1rem;
     font-size: 0.9rem;
     color: var(--muted-color);
+  }
+  .offset {
+    font-size: 0.7rem;
+    color: var(--muted-color);
+    transition: color 120ms ease;
   }
 </style>

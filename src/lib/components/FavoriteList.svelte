@@ -1,23 +1,15 @@
 <script lang="ts">
-  import { createEventDispatcher } from 'svelte';
   import { slide } from 'svelte/transition';
   import { getTimeForTZ, getUTCOffset } from '$lib/utils/timezones';
   import { getCountryTimezones } from '$lib/data/countryTimezones.js';
   import { getFlagEmoji } from '$lib/utils/countryFlags';
   import { currentTime } from '$lib/components/time';
+  import { preferences, type FavoriteZone } from '$lib/components/preferences';
 
-  type FavoriteZone = {
-    country: string;
-    timezone: string;
-    flagName?: string;
-  };
-
-  export let favorites: FavoriteZone[] = [];
-
-  const dispatch = createEventDispatcher<{ removeFavorite: FavoriteZone }>();
+  $: favorites = $preferences.favorites;
 
   function remove(fav: FavoriteZone) {
-    dispatch('removeFavorite', fav);
+    preferences.removeFavorite(fav);
   }
 
   $: favoriteDetails = favorites.map((fav) => {

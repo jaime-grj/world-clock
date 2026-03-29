@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { onMount, createEventDispatcher } from 'svelte';
+  import { onMount } from 'svelte';
   import * as d3 from 'd3';
   import { feature } from 'topojson-client';
   import type { Feature, FeatureCollection, GeoJsonProperties, Geometry } from 'geojson';
@@ -11,8 +11,8 @@
   import FavoriteList from '$lib/components/FavoriteList.svelte';
   import { getFlagEmoji } from '$lib/utils/countryFlags';
   import { rectCollide } from '$lib/utils/d3-forces';
+  import { preferences, type FavoriteZone } from '$lib/components/preferences';
 
-  type Theme = 'light' | 'dark';
   type LabelPoint = {
     id: string;
     label: string;
@@ -32,27 +32,12 @@
 
   type CountryFeature = Feature<Geometry, { name: string }>;
 
-  type FavoriteZone = {
-    country: string;
-    timezone: string;
-    flagName?: string;
-  };
-
-  const dispatch = createEventDispatcher<{
-    addFavorite: FavoriteZone;
-    removeFavorite: FavoriteZone;
-    toggleTheme: Theme;
-  }>();
-
   const ASPECT_RATIO = 0.56;
   const MIN_HEIGHT = 380;
   const MAX_VIEWPORT_RATIO = 0.8;
   const TILE_OFFSETS = [0, -1, 1] as const;
   const MIN_ZOOM = 0.5;
   const MAX_ZOOM = 128;
-
-  export let theme: Theme = 'light';
-  export let favorites: FavoriteZone[] = [];
 
   const LAND_COLOR = 'var(--map-land)';
   const STROKE_COLOR = 'var(--map-stroke)';
@@ -76,7 +61,6 @@
   let showFavorites = false;
   let showConfig = false;
   let initialLoadDone = false;
-  let internalFavorites: FavoriteZone[] = [];
   let showAllTimezones = false;
   let sliderValue = 0;
 
@@ -99,23 +83,11 @@
   }
 
   function addFavoriteZone(country: string, timezone: string, flagName?: string) {
-    const isFav = internalFavorites.some((fav) => fav.timezone === timezone && fav.country === country);
-    if (!isFav) {
-      const newFav: FavoriteZone = { country, timezone, flagName };
-      internalFavorites = [...internalFavorites, newFav];
-      dispatch('addFavorite', newFav);
-    }
-  }
-
-  function handleRemoveFavorite(e: CustomEvent<FavoriteZone>) {
-    const { timezone, country } = e.detail;
-    internalFavorites = internalFavorites.filter((fav) => !(fav.timezone === timezone && fav.country === country));
-    dispatch('removeFavorite', e.detail);
+    preferences.addFavorite({ country, timezone, flagName });
   }
 
   function handleToggleTheme() {
-    theme = theme === 'light' ? 'dark' : 'light';
-    dispatch('toggleTheme', theme);
+    preferences.toggleTheme();
   }
 
   function handleToggleFavorites() {
@@ -136,13 +108,6 @@
     return MIN_ZOOM * Math.pow(MAX_ZOOM / MIN_ZOOM, val / 100);
   }
 
-  $: {
-    if (initialLoadDone && typeof window !== 'undefined') {
-      window.localStorage.setItem('world-clock-favorites', JSON.stringify(internalFavorites));
-      window.localStorage.setItem('world-clock-theme', theme);
-    }
-  }
-
   $: hoveredLabels = hoveredCountry
     ? labelAnchors
         .filter((label) => label.country === hoveredCountry)
@@ -153,7 +118,7 @@
     : [];
 
   $: favoriteLabels = labelAnchors
-    .filter((label) => internalFavorites.some((fav) => fav.timezone === label.timezone && fav.country === label.country))
+    .filter((label) => $preferences.favorites.some((fav) => fav.timezone === label.timezone && fav.country === label.country))
     .map((label) => {
       const [tx, ty] = currentTransform.apply([label.x, label.y]);
       return { ...label, x: tx, y: ty, targetX: tx, targetY: ty, source: 'favorite' } satisfies RenderLabel;
@@ -252,21 +217,6 @@
   }
 
   onMount(() => {
-    if (typeof window !== 'undefined') {
-      const savedFavorites = window.localStorage.getItem('world-clock-favorites');
-      if (savedFavorites) {
-        try {
-          internalFavorites = JSON.parse(savedFavorites);
-        } catch (e) {}
-      } else {
-        internalFavorites = favorites;
-      }
-
-      const savedTheme = window.localStorage.getItem('world-clock-theme');
-      if (savedTheme === 'light' || savedTheme === 'dark') {
-        theme = savedTheme;
-      }
-    }
     initialLoadDone = true;
 
     let resizeTimeout: ReturnType<typeof setTimeout> | null = null;
@@ -643,7 +593,7 @@
   }
 </script>
 
-<div class="map-shell" bind:this={containerEl} data-theme={theme}>
+<div class="map-shell" bind:this={containerEl} data-theme={$preferences.theme}>
   <div class="map-wrapper" style={`height:${height}px`}>
     <svg bind:this={svgContainer} class="main-map"></svg>
     <svg class="overlay-layer">
@@ -713,7 +663,7 @@
         ⟳
       </button>
       <button type="button" on:click={handleToggleTheme} aria-label="Alternar tema">
-        {theme === 'light' ? '🌙' : '☀️'}
+        {$preferences.theme === 'light' ? '🌙' : '☀️'}
       </button>
       <button type="button" class:active={showFavorites} on:click={handleToggleFavorites} aria-label="Favoritos">
         ⭐
@@ -723,10 +673,7 @@
       </button>
       {#if showFavorites}
         <div class="favorites-wrapper">
-          <FavoriteList 
-            favorites={internalFavorites} 
-            on:removeFavorite={handleRemoveFavorite} 
-          />
+          <FavoriteList />
         </div>
       {/if}
       {#if showConfig}

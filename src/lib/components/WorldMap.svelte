@@ -1,5 +1,6 @@
 <script lang="ts">
   import { onMount } from 'svelte';
+  import './WorldMap.css';
   import * as d3 from 'd3';
   import { feature } from 'topojson-client';
   import type { Feature, FeatureCollection, GeoJsonProperties, Geometry } from 'geojson';
@@ -9,6 +10,7 @@
   import tzLookup from 'tz-lookup';
   import TimeLabel from '$lib/components/TimeLabel.svelte';
   import MapControls from '$lib/components/MapControls.svelte';
+  import MapSearch from '$lib/components/MapSearch.svelte';
   import { getFlagEmoji } from '$lib/utils/countryFlags';
   import { preferences, type FavoriteZone } from '$lib/components/preferences';
 
@@ -60,38 +62,6 @@
   let initialLoadDone = false;
   let showAllTimezones = false;
   let sliderValue = 0;
-  
-  let searchQuery = '';
-  let searchResults: LabelPoint[] = [];
-  let showSearchResults = false;
-
-  $: {
-    if (searchQuery.trim().length > 0) {
-      const q = searchQuery.toLowerCase();
-      const baseLabels = labelAnchors.filter((l) => !l.id.includes('-rep-'));
-
-      const exactMatches: LabelPoint[] = [];
-      const partialMatches: LabelPoint[] = [];
-
-      baseLabels.forEach((l) => {
-        if (l.country.toLowerCase() === q || l.label.toLowerCase() === q) {
-          exactMatches.push(l);
-        } else if (
-          l.country.toLowerCase().includes(q) ||
-          l.label.toLowerCase().includes(q) ||
-          l.timezone.toLowerCase().includes(q)
-        ) {
-          partialMatches.push(l);
-        }
-      });
-
-      searchResults = [...exactMatches, ...partialMatches].slice(0, 6);
-      showSearchResults = true;
-    } else {
-      searchResults = [];
-      showSearchResults = false;
-    }
-  }
 
   let initialScale = 1;
   let initialTranslate: [number, number] = [0, 0];
@@ -136,9 +106,6 @@
         zoomBehavior.transform,
         d3.zoomIdentity.translate(width / 2 - label.x * targetScale, height / 2 - label.y * targetScale).scale(targetScale)
       );
-
-    searchQuery = '';
-    showSearchResults = false;
 
     highlightCountry(label.country);
 
@@ -632,29 +599,7 @@
 <div class="map-shell" bind:this={containerEl} data-theme={$preferences.theme}>
   <div class="map-wrapper" style={`height:${height}px`}>
     <svg bind:this={svgContainer} class="main-map"></svg>
-    <div class="search-container">
-      <input 
-        type="text" 
-        placeholder="Buscar país, ciudad o zona..." 
-        bind:value={searchQuery}
-        class="search-input"
-      />
-      {#if showSearchResults}
-        <ul class="search-results">
-          {#each searchResults as result}
-            <li>
-              <button type="button" on:click={() => jumpTo(result)}>
-                <span class="flag">{result.flag}</span>
-                <span class="name">{result.label} <span class="country-name">({result.country})</span></span>
-              </button>
-            </li>
-          {/each}
-          {#if searchResults.length === 0}
-            <li class="no-results">No se encontraron resultados</li>
-          {/if}
-        </ul>
-      {/if}
-    </div>
+    <MapSearch {labelAnchors} on:jump={(e) => jumpTo(e.detail)} />
     <svg class="overlay-layer">
       <g>
         {#each arrangedLabels as label (label.id)}
@@ -708,127 +653,3 @@
     />
   </div>
 </div>
-
-<style>
-  .map-shell {
-    width: 100%;
-  }
-
-  .map-wrapper {
-    position: relative;
-    width: 100%;
-    min-height: 360px;
-  }
-
-  .main-map {
-    border-radius: 0;
-    box-shadow: 0 0 18px rgba(15, 23, 42, 0.15);
-    display: block;
-    background-color: var(--map-water);
-  }
-
-  .overlay-layer {
-    position: absolute;
-    inset: 0;
-    width: 100%;
-    height: 100%;
-    pointer-events: none;
-    z-index: 1;
-    overflow: visible;
-  }
-
-  .labels-layer {
-    position: absolute;
-    inset: 0;
-    pointer-events: none;
-    z-index: 2;
-  }
-
-  .labels-layer :global(.time-label) {
-    pointer-events: auto;
-  }
-
-  .search-container {
-    position: absolute;
-    top: 0.75rem;
-    left: 0.75rem;
-    z-index: 10;
-    width: 280px;
-    display: flex;
-    flex-direction: column;
-    gap: 0.35rem;
-  }
-
-  .search-input {
-    width: 100%;
-    padding: 0.6rem 1rem;
-    font-size: 0.95rem;
-    border: 1px solid var(--control-bg);
-    border-radius: 4px;
-    background: var(--control-bg);
-    color: var(--control-color);
-    box-shadow: 0 4px 12px rgba(15, 23, 42, 0.2);
-    outline: none;
-    transition: border-color 120ms ease;
-  }
-
-  .search-input:focus {
-    border-color: var(--accent);
-  }
-
-  .search-results {
-    list-style: none;
-    margin: 0;
-    padding: 0;
-    background: var(--control-bg);
-    border-radius: 4px;
-    box-shadow: 0 4px 12px rgba(15, 23, 42, 0.2);
-    overflow: hidden;
-  }
-
-  .search-results li {
-    border-bottom: 1px solid rgba(128, 128, 128, 0.1);
-  }
-
-  .search-results li:last-child {
-    border-bottom: none;
-  }
-
-  .search-results button {
-    width: 100%;
-    text-align: left;
-    padding: 0.6rem 1rem;
-    background: transparent;
-    border: none;
-    color: var(--control-color);
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    font-size: 0.9rem;
-    transition: background 120ms ease;
-  }
-
-  .search-results button:hover,
-  .search-results button:focus-visible {
-    background: var(--accent);
-    color: #fff;
-    outline: none;
-  }
-  
-  .search-results button:hover .country-name,
-  .search-results button:focus-visible .country-name {
-    color: rgba(255, 255, 255, 0.8);
-  }
-
-  .country-name {
-    font-size: 0.8rem;
-    color: var(--muted-color);
-  }
-
-  .no-results {
-    padding: 0.6rem 1rem;
-    font-size: 0.9rem;
-    color: var(--muted-color);
-  }
-</style>

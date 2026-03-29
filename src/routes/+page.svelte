@@ -1,36 +1,12 @@
 <script lang="ts">
-  import { onMount } from 'svelte';
+  import { preferences } from '$lib/components/preferences';
   import WorldMap from '$lib/components/WorldMap.svelte';
 
-  type Theme = 'light' | 'dark';
-
-  let theme: Theme = 'light';
-
-  function applyTheme(next: Theme) {
-    if (typeof document === 'undefined') return;
-    document.body.dataset.theme = next;
-  }
-
-  onMount(() => {
-    if (typeof window === 'undefined') return;
-    const media = window.matchMedia('(prefers-color-scheme: dark)');
-    theme = media.matches ? 'dark' : 'light';
-    applyTheme(theme);
-    const listener = (event: MediaQueryListEvent) => {
-      theme = event.matches ? 'dark' : 'light';
-    };
-    media.addEventListener('change', listener);
-    return () => media.removeEventListener('change', listener);
-  });
-
-  $: applyTheme(theme);
+  $: if (typeof document !== 'undefined') document.body.dataset.theme = $preferences.theme;
 </script>
 
 <div class="fullscreen-map">
-  <WorldMap
-    {theme}
-    on:toggleTheme={(event) => theme = event.detail}
-  />
+  <WorldMap />
 </div>
 
 <style>

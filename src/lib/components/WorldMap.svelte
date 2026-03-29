@@ -5,7 +5,6 @@
   import { feature } from 'topojson-client';
   import type { Feature, FeatureCollection, GeoJsonProperties, Geometry } from 'geojson';
   import type { Topology } from 'topojson-specification';
-  import world from '$lib/data/world-100m.json';
   import { getCountryTimezones, normalizeCountryName } from '$lib/data/countryTimezones.js';
   import tzLookup from 'tz-lookup';
   import TimeLabel from '$lib/components/TimeLabel.svelte';
@@ -72,6 +71,7 @@
   let d3Projection: any = null;
   let forceWorker: Worker | null = null;
   let currentArrangeId = 0;
+  let worldData: any = null;
 
   function getSubsolarPoint(date: Date): [number, number] {
     const mod = (a: number, b: number) => ((a % b) + b) % b;
@@ -249,52 +249,61 @@
   }
 
   onMount(() => {
+    let unmounted = false;
     initialLoadDone = true;
 
-    forceWorker = new Worker(new URL('../utils/forceWorker.ts', import.meta.url), { type: 'module' });
-    forceWorker.onmessage = (e) => {
-      if (e.data.id === currentArrangeId) {
-        arrangedLabels = e.data.nodes;
-      }
-    };
-    if (rawLabels.length > 0) {
-      runForceWorker(rawLabels);
-    }
+    import('$lib/data/world-100m.json').then(({ default: data }) => {
+      if (unmounted) return;
+      worldData = data;
 
-    let resizeTimeout: ReturnType<typeof setTimeout> | null = null;
-
-    const observer = new ResizeObserver((entries) => {
-      if (!entries.length) return;
-      const { width: nextWidth, height: nextHeight } = entries[0].contentRect;
-      if (!nextWidth) return;
-      const resolvedHeight = calculateHeight(nextWidth, nextHeight);
-      if (Math.abs(nextWidth - width) > 1 || Math.abs(resolvedHeight - height) > 1) {
-        width = nextWidth;
-        height = resolvedHeight;
-        if (resizeTimeout) clearTimeout(resizeTimeout);
-        resizeTimeout = setTimeout(() => {
-          drawMap();
-        }, 150);
+      forceWorker = new Worker(new URL('../utils/forceWorker.ts', import.meta.url), { type: 'module' });
+      forceWorker.onmessage = (e) => {
+        if (e.data.id === currentArrangeId) {
+          arrangedLabels = e.data.nodes;
+        }
+      };
+      if (rawLabels.length > 0) {
+        runForceWorker(rawLabels);
       }
+
+      let resizeTimeout: ReturnType<typeof setTimeout> | null = null;
+
+      const observer = new ResizeObserver((entries) => {
+        if (!entries.length) return;
+        const { width: nextWidth, height: nextHeight } = entries[0].contentRect;
+        if (!nextWidth) return;
+        const resolvedHeight = calculateHeight(nextWidth, nextHeight);
+        if (Math.abs(nextWidth - width) > 1 || Math.abs(resolvedHeight - height) > 1) {
+          width = nextWidth;
+          height = resolvedHeight;
+          if (resizeTimeout) clearTimeout(resizeTimeout);
+          resizeTimeout = setTimeout(() => {
+            drawMap();
+          }, 150);
+        }
+      });
+
+      resizeObserver = observer;
+
+      if (containerEl) {
+        observer.observe(containerEl);
+        const initialWidth = containerEl.clientWidth;
+        const initialHeight = containerEl.clientHeight;
+        if (initialWidth) {
+          width = initialWidth;
+          height = calculateHeight(initialWidth, initialHeight);
+        }
+      }
+
+      drawMap();
     });
 
-    resizeObserver = observer;
-
-    if (containerEl) {
-      observer.observe(containerEl);
-      const initialWidth = containerEl.clientWidth;
-      const initialHeight = containerEl.clientHeight;
-      if (initialWidth) {
-        width = initialWidth;
-        height = calculateHeight(initialWidth, initialHeight);
-      }
-    }
-
-    drawMap();
-
     return () => {
-      observer.disconnect();
-      resizeObserver = null;
+      unmounted = true;
+      if (resizeObserver) {
+        resizeObserver.disconnect();
+        resizeObserver = null;
+      }
       if (forceWorker) {
         forceWorker.terminate();
       }
@@ -302,7 +311,8 @@
   });
 
   function drawMap() {
-    const topology = world as unknown as Topology;
+    if (!worldData) return;
+    const topology = worldData as unknown as Topology;
     const featureCollection = feature(
       topology,
       (topology.objects as Record<string, unknown>).countries as any

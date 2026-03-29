@@ -338,6 +338,18 @@ export const countryTimezones = {
       label: 'México Sureste',
       timezone: 'America/Cancun',
       coords: [-86.8515, 21.1619]
+    },
+    {
+      id: 'mx-juarez',
+      label: 'Ciudad Juárez',
+      timezone: 'America/Ciudad_Juarez',
+      coords: [-106.4869, 31.7394]
+    },
+    {
+      id: 'mx-matamoros',
+      label: 'Matamoros',
+      timezone: 'America/Matamoros',
+      coords: [-97.5042, 25.8797]
     }
   ],
   Guatemala: [

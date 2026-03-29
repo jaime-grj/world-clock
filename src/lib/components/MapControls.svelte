@@ -1,6 +1,6 @@
 <script lang="ts">
   import FavoriteList from '$lib/components/FavoriteList.svelte';
-  import { preferences } from '$lib/components/preferences';
+  import { preferences } from '$lib/stores/preferences';
 
   export let zoomIn: () => void;
   export let zoomOut: () => void;

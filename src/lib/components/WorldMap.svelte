@@ -1,6 +1,6 @@
 <script lang="ts">
   import { onMount } from 'svelte';
-  import './WorldMap.css';
+  import '$lib/css/WorldMap.css';
   import * as d3 from 'd3';
   import { feature } from 'topojson-client';
   import type { Feature, FeatureCollection, GeoJsonProperties, Geometry } from 'geojson';
@@ -12,7 +12,7 @@
   import MapControls from '$lib/components/MapControls.svelte';
   import MapSearch from '$lib/components/MapSearch.svelte';
   import { getFlagEmoji } from '$lib/utils/countryFlags';
-  import { preferences, type FavoriteZone } from '$lib/components/preferences';
+  import { preferences, type FavoriteZone } from '$lib/stores/preferences';
 
   type LabelPoint = {
     id: string;
@@ -209,7 +209,7 @@
   onMount(() => {
     initialLoadDone = true;
 
-    forceWorker = new Worker(new URL('../components/forceWorker.ts', import.meta.url), { type: 'module' });
+    forceWorker = new Worker(new URL('../utils/forceWorker.ts', import.meta.url), { type: 'module' });
     forceWorker.onmessage = (e) => {
       if (e.data.id === currentArrangeId) {
         arrangedLabels = e.data.nodes;

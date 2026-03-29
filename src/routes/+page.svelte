@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { preferences } from '$lib/components/preferences';
+  import { preferences } from '$lib/stores/preferences';
   import WorldMap from '$lib/components/WorldMap.svelte';
 
   $: if (typeof document !== 'undefined') document.body.dataset.theme = $preferences.theme;

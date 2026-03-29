@@ -3,8 +3,8 @@
   import { getTimeForTZ, getUTCOffset } from '$lib/utils/timezones';
   import { getCountryTimezones } from '$lib/data/countryTimezones.js';
   import { getFlagEmoji } from '$lib/utils/countryFlags';
-  import { currentTime } from '$lib/components/time';
-  import { preferences, type FavoriteZone } from '$lib/components/preferences';
+  import { currentTime } from '$lib/stores/time';
+  import { preferences, type FavoriteZone } from '$lib/stores/preferences';
 
   $: favorites = $preferences.favorites;
 

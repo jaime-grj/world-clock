@@ -1,5 +1,5 @@
 import * as d3 from 'd3';
-import { rectCollide } from '../utils/d3-forces';
+import { rectCollide } from './d3-forces';
 
 self.addEventListener('message', (event) => {
   const { id, nodes } = event.data;

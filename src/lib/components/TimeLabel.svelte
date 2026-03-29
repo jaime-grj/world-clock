@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { createEventDispatcher } from 'svelte';
 	import { getTimeForTZ } from '$lib/utils/timezones';
-	import { currentTime } from '$lib/components/time';
+	import { currentTime } from '$lib/stores/time';
 
 	export let label: string;
 	export let flag = '🏳️';

@@ -139,6 +139,7 @@
   $: {
     if (initialLoadDone && typeof window !== 'undefined') {
       window.localStorage.setItem('world-clock-favorites', JSON.stringify(internalFavorites));
+      window.localStorage.setItem('world-clock-theme', theme);
     }
   }
 
@@ -259,6 +260,11 @@
         } catch (e) {}
       } else {
         internalFavorites = favorites;
+      }
+
+      const savedTheme = window.localStorage.getItem('world-clock-theme');
+      if (savedTheme === 'light' || savedTheme === 'dark') {
+        theme = savedTheme;
       }
     }
     initialLoadDone = true;

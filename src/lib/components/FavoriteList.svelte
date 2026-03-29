@@ -1,7 +1,7 @@
 <script lang="ts">
   import { createEventDispatcher } from 'svelte';
   import { slide } from 'svelte/transition';
-  import { getTimeForTZ } from '$lib/utils/timezones';
+  import { getTimeForTZ, getUTCOffset } from '$lib/utils/timezones';
   import { getCountryTimezones } from '$lib/data/countryTimezones.js';
   import { getFlagEmoji } from '$lib/utils/countryFlags';
   import { currentTime } from '$lib/components/time';
@@ -51,7 +51,7 @@
                 <span class="fav-flag">{getFlagEmoji(favorite.flagName || favorite.country)}</span>
                 <strong>{favorite.label}</strong>
               </span>
-              <span class="fav-tz">{favorite.tz}</span>
+              <span class="fav-tz">{favorite.tz} &bull; {getUTCOffset($currentTime, favorite.tz)}</span>
               <span>{getTimeForTZ($currentTime, favorite.tz)}</span>
             </div>
             <button on:click={() => remove(favorite.original)} aria-label={`Quitar ${favorite.label} de favoritos`}>

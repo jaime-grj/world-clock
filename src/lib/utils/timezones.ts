@@ -7,3 +7,16 @@ export function getTimeForTZ(date: Date, timezone: string): string {
     timeZone: timezone
   }).format(date);
 }
+
+export function getUTCOffset(date: Date, timezone: string): string {
+  try {
+    const parts = new Intl.DateTimeFormat('en-US', {
+      timeZone: timezone,
+      timeZoneName: 'shortOffset'
+    }).formatToParts(date);
+    const offset = parts.find((p) => p.type === 'timeZoneName')?.value;
+    return offset ? offset.replace('GMT', 'UTC') : 'UTC';
+  } catch (e) {
+    return 'UTC';
+  }
+}

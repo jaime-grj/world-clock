@@ -10,7 +10,6 @@
   import TimeLabel from '$lib/components/TimeLabel.svelte';
   import FavoriteList from '$lib/components/FavoriteList.svelte';
   import { getFlagEmoji } from '$lib/utils/countryFlags';
-  import { rectCollide } from '$lib/utils/d3-forces';
   import { preferences, type FavoriteZone } from '$lib/components/preferences';
 
   type LabelPoint = {
@@ -70,6 +69,8 @@
   let baseTileWidth = 0;
   let d3Path: any = null;
   let d3Projection: any = null;
+  let forceWorker: Worker | null = null;
+  let currentArrangeId = 0;
 
   function highlightCountry(country: string) {
     cancelHoverClear();
@@ -138,6 +139,17 @@
   let arrangeTimeout: ReturnType<typeof setTimeout> | null = null;
   let lastArrangedScale = 0;
 
+  function runForceWorker(newRaw: RenderLabel[]) {
+    if (!forceWorker) return;
+    currentArrangeId++;
+    const currentMap = new Map(arrangedLabels.map((a) => [a.id, a]));
+    const nodes = newRaw.map((r) => {
+      const current = currentMap.get(r.id);
+      return { ...r, x: current ? current.x : r.x, y: current ? current.y : r.y };
+    });
+    forceWorker.postMessage({ id: currentArrangeId, nodes });
+  }
+
   $: updateArrangedLabels(rawLabels);
 
   function updateArrangedLabels(newRaw: RenderLabel[]) {
@@ -154,15 +166,9 @@
     // we re-run immediately, avoiding visual snap-backs by passing the existing simulated points.
     if (currentIds !== lastLabelIds) {
       if (arrangeTimeout) clearTimeout(arrangeTimeout);
-      const currentMap = new Map(arrangedLabels.map((a) => [a.id, a]));
-      arrangedLabels = arrangeLabels(
-        newRaw.map((r) => {
-          const current = currentMap.get(r.id);
-          return { ...r, x: current ? current.x : r.x, y: current ? current.y : r.y };
-        })
-      );
       lastLabelIds = currentIds;
       lastArrangedScale = currentTransform.k;
+      runForceWorker(newRaw);
       return;
     }
 
@@ -188,36 +194,23 @@
 
     // Let the heavy simulation settle in after interactions finish (Debouncer)
     arrangeTimeout = setTimeout(() => {
-      const currentMap = new Map(arrangedLabels.map((a) => [a.id, a]));
-      arrangedLabels = arrangeLabels(
-        newRaw.map((r) => {
-          const current = currentMap.get(r.id);
-          return { ...r, x: current ? current.x : r.x, y: current ? current.y : r.y };
-        })
-      );
+      runForceWorker(newRaw);
       lastArrangedScale = currentTransform.k;
     }, 150);
   }
 
-  function arrangeLabels(labels: RenderLabel[]): RenderLabel[] {
-    if (!labels || labels.length === 0) return [];
-    
-    const nodes = labels.map((l) => ({ ...l }));
-    
-    const simulation = d3.forceSimulation(nodes as any)
-      .force('x', d3.forceX((d: any) => d.targetX).strength(0.1))
-      .force('y', d3.forceY((d: any) => d.targetY).strength(0.1))
-      .force('collide', rectCollide())
-      .stop();
-
-    const ticks = nodes.length > 300 ? 15 : (nodes.length > 50 ? 60 : 250);
-    for (let i = 0; i < ticks; ++i) simulation.tick();
-    
-    return nodes;
-  }
-
   onMount(() => {
     initialLoadDone = true;
+
+    forceWorker = new Worker(new URL('../components/forceWorker.ts', import.meta.url), { type: 'module' });
+    forceWorker.onmessage = (e) => {
+      if (e.data.id === currentArrangeId) {
+        arrangedLabels = e.data.nodes;
+      }
+    };
+    if (rawLabels.length > 0) {
+      runForceWorker(rawLabels);
+    }
 
     let resizeTimeout: ReturnType<typeof setTimeout> | null = null;
 
@@ -253,6 +246,9 @@
     return () => {
       observer.disconnect();
       resizeObserver = null;
+      if (forceWorker) {
+        forceWorker.terminate();
+      }
     };
   });
 

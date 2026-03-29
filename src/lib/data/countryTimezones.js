@@ -688,6 +688,13 @@ export const countryTimezones = {
       label: 'Islas Chatham',
       timezone: 'Pacific/Chatham',
       coords: [-176.55, -44.0]
+    },
+    {
+      id: 'tk-main',
+      label: 'Tokelau',
+      timezone: 'Pacific/Fakaofo',
+      flagName: 'Tokelau',
+      coords: [-171.2188, -9.3803]
     }
   ],
   Portugal: [
@@ -2317,14 +2324,6 @@ export const countryTimezones = {
       label: 'Islas Marianas del Norte',
       timezone: 'Pacific/Saipan',
       coords: [145.7605, 15.1909]
-    }
-  ],
-  Tokelau: [
-    {
-      id: 'tk-main',
-      label: 'Tokelau',
-      timezone: 'Pacific/Fakaofo',
-      coords: [-171.2188, -9.3803]
     }
   ],
   'British Indian Ocean Territory': [

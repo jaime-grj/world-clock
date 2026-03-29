@@ -1,5 +1,6 @@
 <script lang="ts">
   import { createEventDispatcher } from 'svelte';
+  import Fuse from 'fuse.js';
   import { currentTime } from '$lib/stores/time';
   import { getTimeForTZ, getUTCOffset } from '$lib/utils/timezones';
 
@@ -22,27 +23,21 @@
   let searchResults: LabelPoint[] = [];
   let showSearchResults = false;
 
+  $: baseLabels = labelAnchors.filter((l) => !l.id.includes('-rep-'));
+
+  $: fuse = new Fuse(baseLabels, {
+    keys: [
+      { name: 'country', weight: 2 },
+      { name: 'label', weight: 1.5 },
+      { name: 'timezone', weight: 1 }
+    ],
+    threshold: 0.3,
+    ignoreLocation: true
+  });
+
   $: {
     if (searchQuery.trim().length > 0) {
-      const q = searchQuery.toLowerCase();
-      const baseLabels = labelAnchors.filter((l) => !l.id.includes('-rep-'));
-
-      const exactMatches: LabelPoint[] = [];
-      const partialMatches: LabelPoint[] = [];
-
-      baseLabels.forEach((l) => {
-        if (l.country.toLowerCase() === q || l.label.toLowerCase() === q) {
-          exactMatches.push(l);
-        } else if (
-          l.country.toLowerCase().includes(q) ||
-          l.label.toLowerCase().includes(q) ||
-          l.timezone.toLowerCase().includes(q)
-        ) {
-          partialMatches.push(l);
-        }
-      });
-
-      searchResults = [...exactMatches, ...partialMatches].slice(0, 6);
+      searchResults = fuse.search(searchQuery).map(result => result.item).slice(0, 6);
       showSearchResults = true;
     } else {
       searchResults = [];

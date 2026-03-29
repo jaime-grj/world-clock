@@ -98,7 +98,21 @@
   function jumpTo(label: LabelPoint) {
     if (!svgSelection || !zoomBehavior) return;
 
-    const targetScale = 4; // Zoom scale factor when jumping
+    let targetScale = 4; // Default zoom scale factor when jumping
+    const countryPath = svgSelection.select(`path[data-country="${label.country.replace(/"/g, '\\"')}"]`).node() as SVGGraphicsElement | null;
+
+    if (countryPath) {
+      const bbox = countryPath.getBBox();
+      const unscaledWidth = bbox.width / currentTransform.k;
+      const unscaledHeight = bbox.height / currentTransform.k;
+
+      if (unscaledWidth > 0 && unscaledHeight > 0) {
+        const scaleX = (width * 0.4) / unscaledWidth;
+        const scaleY = (height * 0.4) / unscaledHeight;
+        targetScale = Math.max(4, Math.min(scaleX, scaleY, 64));
+      }
+    }
+
     svgSelection
       .transition()
       .duration(750)

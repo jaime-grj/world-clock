@@ -6,7 +6,8 @@ export function rectCollide() {
   function force(alpha: number) {
     const quadtree = d3.quadtree(simNodes, (d: any) => d.x, (d: any) => d.y);
     // Dynamically lower precision iterations for large lists to prevent lagging 
-    const iterations = simNodes.length > 300 ? 1 : (simNodes.length > 50 ? 2 : 4);
+    //const iterations = simNodes.length > 300 ? 1 : (simNodes.length > 50 ? 1: 1);
+    const iterations = 1;
     
     for (let iter = 0; iter < iterations; ++iter) {
       for (let i = 0, n = simNodes.length; i < n; ++i) {

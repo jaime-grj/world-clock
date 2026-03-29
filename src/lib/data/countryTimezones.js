@@ -206,6 +206,12 @@ export const countryTimezones = {
       label: 'China',
       timezone: 'Asia/Shanghai',
       coords: [121.474, 31.219]
+    },
+    {
+      id: 'cn-xinjiang',
+      label: 'Xinjiang',
+      timezone: 'Asia/Urumqi',
+      coords: [87.6168, 43.8256]
     }
   ],
   Japan: [

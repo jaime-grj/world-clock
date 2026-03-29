@@ -34,6 +34,7 @@
     --map-land: #c7d7ef;
     --map-stroke: #64748b;
     --map-highlight: #8bb8ff;
+    --map-night: rgba(15, 23, 42, 0.15);
     --control-bg: rgba(255, 255, 255, 0.9);
     --control-color: #0f172a;
     --favorite-card-bg: #f8fafc;
@@ -59,6 +60,7 @@
     --map-land: #1e293b;
     --map-stroke: #475569;
     --map-highlight: #38bdf8;
+    --map-night: rgba(0, 0, 0, 0.35);
     --control-bg: rgba(15, 23, 42, 0.92);
     --control-color: #f8fafc;
     --favorite-card-bg: #111827;

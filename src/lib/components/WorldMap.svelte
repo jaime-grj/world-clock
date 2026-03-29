@@ -13,6 +13,7 @@
   import MapSearch from '$lib/components/MapSearch.svelte';
   import { getFlagEmoji } from '$lib/utils/countryFlags';
   import { preferences, type FavoriteZone } from '$lib/stores/preferences';
+  import { currentTime } from '$lib/stores/time';
 
   type LabelPoint = {
     id: string;
@@ -71,6 +72,33 @@
   let d3Projection: any = null;
   let forceWorker: Worker | null = null;
   let currentArrangeId = 0;
+
+  function getSubsolarPoint(date: Date): [number, number] {
+    const mod = (a: number, b: number) => ((a % b) + b) % b;
+    const n = date.getTime() / 86400000.0 - 10957.5;
+
+    const L = mod(280.460 + 0.9856474 * n, 360);
+    const g = mod(357.528 + 0.9856003 * n, 360) * (Math.PI / 180);
+    const lambda = (L + 1.915 * Math.sin(g) + 0.020 * Math.sin(2 * g)) * (Math.PI / 180);
+    const epsilon = (23.439 - 0.0000004 * n) * (Math.PI / 180);
+
+    const declination = Math.asin(Math.sin(epsilon) * Math.sin(lambda)) * (180 / Math.PI);
+    const alpha = Math.atan2(Math.cos(epsilon) * Math.sin(lambda), Math.cos(lambda)) * (180 / Math.PI);
+    const gmst = mod(280.46061837 + 360.98564736629 * n, 360);
+
+    let longitude = mod(alpha - gmst, 360);
+    if (longitude > 180) longitude -= 360;
+
+    return [longitude, declination];
+  }
+
+  $: if (svgSelection && d3Path && $currentTime) {
+    const [subLon, subLat] = getSubsolarPoint($currentTime);
+    let antiLon = subLon + 180;
+    if (antiLon > 180) antiLon -= 360;
+    const nightPolygon = d3.geoCircle().center([antiLon, -subLat]).radius(90).precision(1)();
+    svgSelection.selectAll('.terminator-path').datum(nightPolygon).attr('d', d3Path as any);
+  }
 
   function highlightCountry(country: string) {
     cancelHoverClear();
@@ -350,6 +378,13 @@
           addFavoriteZone(countryName, first.timezone, (first as any).flagName);
           }
         });
+
+      tileGroup
+        .append('path')
+        .attr('class', 'terminator-path')
+        .datum({ type: 'Polygon', coordinates: [] })
+        .attr('fill', 'var(--map-night, rgba(0, 0, 0, 0.25))')
+        .style('pointer-events', 'none');
     });
 
     const seenLabelIds = new Set<string>();

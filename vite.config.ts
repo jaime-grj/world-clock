@@ -18,9 +18,8 @@ export default defineConfig({
                 name: 'Reloj mundial',
                 short_name: 'Reloj',
                 description: 'Aplicación de reloj mundial interactiva',
-                theme_color: '#ffffff',
-                background_color: '#ffffff',
-                // Changed from 'fullscreen' to 'standalone'
+                theme_color: '#000000',
+                background_color: '#000000',
                 display: 'standalone', 
                 start_url: '/',
                 scope: '/',
